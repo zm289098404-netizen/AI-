@@ -17,6 +17,8 @@ from app.models import (
     StatsResponse, ExportRequest,
     TemplateInfo, CreateTemplateRequest, AuditEntry,
     ModelConfig, UpdateModelConfigRequest,
+    TestConnectionResponse, SystemSettings, UpdateSystemSettingsRequest,
+    PublicSystemInfo,
 )
 from app.rag import ingest, generator
 from app.rag.retriever import get_backend
@@ -117,6 +119,44 @@ def update_model_config(req: UpdateModelConfigRequest, admin: dict = Depends(aut
                "api_key_set": cfg["api_key_set"],
                "reset": req.reset})
     return ModelConfig(**cfg)
+
+
+@app.post("/api/admin/model-config/test", response_model=TestConnectionResponse)
+def test_model_connection(admin: dict = Depends(auth.require_admin)):
+    """以当前 Provider 发起一次最小调用，验证连通性。"""
+    r = settings_store.test_connection()
+    audit.log(admin["sub"], admin["tenant_id"], "test_model_connection",
+              {"ok": r["ok"], "mode": r["mode"], "latency_ms": r["latency_ms"]})
+    return TestConnectionResponse(**r)
+
+
+# ---------------- 系统设置（部署模式 / 品牌） ----------------
+@app.get("/api/admin/system", response_model=SystemSettings)
+def get_system_settings(_: dict = Depends(auth.require_admin)):
+    return SystemSettings(**settings_store.get_system_settings())
+
+
+@app.put("/api/admin/system", response_model=SystemSettings)
+def update_system_settings(req: UpdateSystemSettingsRequest, admin: dict = Depends(auth.require_admin)):
+    changed = {}
+    if req.deployment_mode is not None:
+        changed["deployment_mode"] = settings_store.set_deployment_mode(req.deployment_mode)
+    if req.brand_name is not None:
+        changed["brand_name"] = settings_store.set_brand_name(req.brand_name)
+    if changed:
+        audit.log(admin["sub"], admin["tenant_id"], "update_system_settings", changed)
+    return SystemSettings(**settings_store.get_system_settings())
+
+
+@app.get("/api/system", response_model=PublicSystemInfo)
+def public_system_info():
+    """登录前可读的公开信息：品牌、部署模式（决定登录页是否显示演示账号提示）。"""
+    return PublicSystemInfo(
+        brand_name=settings_store.brand_name(),
+        deployment_mode=settings_store.deployment_mode(),
+        backend=get_backend().name,
+        mock_mode=settings_store.effective_mock(),
+    )
 
 
 # ---------------- 章节模板 ----------------
@@ -245,6 +285,8 @@ def health():
         "mock_mode": settings_store.effective_mock(),
         "backend": get_backend().name,
         "azure_search": settings.use_azure_search,
+        "deployment_mode": settings_store.deployment_mode(),
+        "brand_name": settings_store.brand_name(),
     }
 
 

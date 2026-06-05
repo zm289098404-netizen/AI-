@@ -17,8 +17,21 @@ def test_builtin_templates_listed():
     assert all(t["builtin"] for t in items if t["name"] in templates_store.BUILTIN_TEMPLATES)
 
 
+def test_has_20_builtin_templates_with_categories():
+    items = templates_store.list_templates("demo")
+    builtin = [t for t in items if t["builtin"]]
+    assert len(builtin) >= 20, f"内置模板应至少 20 套，当前 {len(builtin)}"
+    # 每个内置模板都必须带 category
+    assert all(t.get("category") for t in builtin)
+    cats = {t["category"] for t in builtin}
+    # 覆盖政务、金融、制造、AI 等核心行业
+    for must in ("政务·政企", "金融", "制造·工业", "互联网·AI", "行业应用",
+                 "安全·运维", "服务交付", "通用"):
+        assert must in cats, f"缺少分类: {must}"
+
+
 def test_resolve_builtin_sections():
-    secs = templates_store.resolve_sections("demo", "builtin:POC/试点方案")
+    secs = templates_store.resolve_sections("demo", "builtin:POC / 试点方案")
     assert "验收标准与成功指标" in secs
 
 

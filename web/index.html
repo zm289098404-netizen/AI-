@@ -8,29 +8,61 @@
 </head>
 <body>
 
+<!-- Toast 容器 -->
+<div id="toastRoot" class="toast-root"></div>
+
 <!-- 登录遮罩 -->
 <div id="loginOverlay" class="overlay">
   <div class="login-card">
-    <h1>🏆 智能投标 / 方案生成系统</h1>
-    <p class="subtitle">RAG 售前知识助手 · 请登录</p>
+    <div class="brand-row">
+      <span class="brand-logo">🏆</span>
+      <div>
+        <h1 id="loginBrand">智能投标 / 方案生成系统</h1>
+        <p class="subtitle">RAG 售前知识助手 · 让 AI 帮您赢标</p>
+      </div>
+    </div>
+
+    <div class="login-tabs" role="tablist">
+      <button class="login-tab active" data-mode="demo">🎮 演示登录</button>
+      <button class="login-tab" data-mode="production">🚀 正式部署登录</button>
+    </div>
+
     <input id="loginUser" placeholder="用户名" autocomplete="username" />
     <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password" />
     <button id="btnLogin" class="primary block">登录</button>
     <p id="loginError" class="err"></p>
-    <div class="demo-accounts">
-      演示账号：<br/>
-      <code>admin / admin123</code>（demo 租户·管理员）<br/>
-      <code>presales / demo123</code>（demo 租户·售前）<br/>
-      <code>acme / acme123</code>（acme 租户·管理员）
+
+    <div id="loginDemoBox" class="demo-accounts">
+      <strong>演示账号（点击自动填充）：</strong>
+      <div class="demo-chip" data-u="admin" data-p="admin123">admin / admin123 · demo·管理员</div>
+      <div class="demo-chip" data-u="presales" data-p="demo123">presales / demo123 · demo·售前</div>
+      <div class="demo-chip" data-u="acme" data-p="acme123">acme / acme123 · acme·管理员</div>
+    </div>
+
+    <div id="loginProdBox" class="prod-box hidden">
+      <strong>🛡️ 正式部署模式</strong>
+      <ul>
+        <li>请使用管理员在管理端创建的正式账号登录</li>
+        <li>务必修改 <code>AUTH_SECRET</code> / <code>ADMIN_PASSWORD</code> 默认值</li>
+        <li>建议启用 HTTPS 反代 + 强密码策略 + 备份计划</li>
+      </ul>
+      <a href="https://github.com/zm289098404-netizen/AI-/blob/main/docs/github-setup.md" target="_blank" class="prod-link">📘 部署清单与最佳实践</a>
+    </div>
+
+    <div class="login-footer">
+      <span id="loginSystemInfo" class="sys-info"></span>
     </div>
   </div>
 </div>
 
 <div id="appRoot" class="hidden">
 <header>
-  <div>
-    <h1>🏆 智能投标 / 方案生成系统</h1>
-    <p class="subtitle">基于 RAG 的售前知识助手 · 整合标书 / 案例 / 产品文档</p>
+  <div class="hdr-left">
+    <span class="brand-logo">🏆</span>
+    <div>
+      <h1 id="appBrand">智能投标 / 方案生成系统</h1>
+      <p class="subtitle">基于 RAG 的售前知识助手 · 整合标书 / 案例 / 产品文档</p>
+    </div>
   </div>
   <div class="userbox">
     <div id="statusbar" class="statusbar"></div>
@@ -52,6 +84,7 @@
   <section id="kb" class="panel active">
     <div class="card">
       <h2>知识库管理 <span id="tenantTag" class="tenant-tag"></span></h2>
+      <p class="hint">支持 txt / md / pdf / docx。上传后请点击「重建索引」生效。</p>
       <div class="row">
         <button id="btnIngest" class="primary">🔄 重建知识库索引</button>
         <label class="upload-btn">⬆️ 上传文档
@@ -99,7 +132,7 @@
       <label class="full">RFP 需求 / 招标要点
         <textarea id="genReq" rows="5" placeholder="粘贴客户需求建议书(RFP)要点，如：需建设统一数据中台，支持实时分析、信创适配、等保三级…"></textarea>
       </label>
-      <label class="full">章节模板
+      <label class="full">章节模板（按行业分组）
         <select id="genTemplate"></select>
       </label>
       <div class="row">
@@ -116,8 +149,13 @@
   <section id="tpl" class="panel">
     <div class="card">
       <h2>章节模板管理</h2>
-      <p class="hint">模板定义标书的章节结构。内置模板不可删除；自定义模板按租户隔离。</p>
-      <div id="tplList" class="tpl-list"></div>
+      <p class="hint">系统内置 <strong>20 套</strong> 行业模板（不可删除，按行业折叠浏览）；可叠加租户自定义模板。</p>
+      <div class="row">
+        <input id="tplSearch" placeholder="🔍 关键词筛选（如：金融、信创、AI、外包）" style="max-width:340px" />
+        <button id="btnExpandAll" class="ghost">全部展开</button>
+        <button id="btnCollapseAll" class="ghost">全部折叠</button>
+      </div>
+      <div id="tplGroups" class="tpl-groups"></div>
     </div>
     <div class="card" style="margin-top:16px">
       <h2>新建模板</h2>
@@ -126,90 +164,151 @@
         <textarea id="newTplSections" rows="6" placeholder="项目背景与需求理解&#10;总体技术方案&#10;信创适配说明&#10;实施计划与里程碑&#10;成功案例佐证&#10;报价框架"></textarea>
       </label>
       <button id="btnAddTpl" class="primary">保存模板</button>
-      <pre id="tplLog" class="log"></pre>
     </div>
   </section>
 
   <!-- 管理 -->
   <section id="admin" class="panel">
-    <div class="card">
-      <h2>🤖 AI 模型配置</h2>
-      <p class="hint">切换生成所用的 Chat 模型与向量(Embedding)模型部署名，保存后立即生效。
-        当前模式：<span id="modelMode" class="mode-tag"></span></p>
-      <div class="form-grid">
-        <label>运行模式
-          <select id="cfgMock">
-            <option value="auto">自动（按凭据判定）</option>
-            <option value="off">真实模型（按 Provider 调用）</option>
-            <option value="on">Mock（离线演示）</option>
+    <nav class="subtabs">
+      <button class="subtab active" data-sub="overview">🧭 概览</button>
+      <button class="subtab" data-sub="ai">🤖 AI 模型</button>
+      <button class="subtab" data-sub="tenants">👥 租户与用户</button>
+      <button class="subtab" data-sub="system">🛠 系统设置</button>
+      <button class="subtab" data-sub="audit">📜 审计日志</button>
+    </nav>
+
+    <!-- 概览 -->
+    <div id="sub-overview" class="subpanel active">
+      <div class="card">
+        <h2>系统概览</h2>
+        <div id="overviewGrid" class="overview-grid"></div>
+        <p class="hint" id="overviewTip"></p>
+      </div>
+    </div>
+
+    <!-- AI 模型 -->
+    <div id="sub-ai" class="subpanel">
+      <div class="card">
+        <h2>🤖 AI 模型配置 <span id="modelMode" class="mode-tag"></span></h2>
+        <p class="hint">支持 Azure OpenAI 及国内多家大模型（DeepSeek / 通义 / 智谱 / SiliconFlow / Kimi）。
+          保存后立即生效，可点击「测试连接」验证。</p>
+        <div class="form-grid">
+          <label>运行模式
+            <select id="cfgMock">
+              <option value="auto">自动（按凭据判定）</option>
+              <option value="off">真实模型（按 Provider 调用）</option>
+              <option value="on">Mock（离线演示）</option>
+            </select>
+          </label>
+          <label>AI 服务商 / Provider
+            <select id="cfgProvider"></select>
+          </label>
+          <label id="lblBaseUrl">Base URL（OpenAI 兼容）
+            <input id="cfgBaseUrl" placeholder="如 https://api.deepseek.com/v1" />
+          </label>
+          <label id="lblAzureEndpoint">Azure Endpoint
+            <input id="cfgAzureEndpoint" placeholder="如 https://xxx.openai.azure.com" />
+          </label>
+          <label>API Key（留空=不修改）
+            <input id="cfgApiKey" type="password" placeholder="粘贴服务商 API Key" autocomplete="off" />
+          </label>
+          <label id="lblApiVersion">API Version（Azure）
+            <input id="cfgApiVersion" placeholder="2024-08-01-preview" />
+          </label>
+          <label>Chat 模型（对话/生成）
+            <input id="cfgChat" list="chatPresets" placeholder="如 gpt-4o / deepseek-chat" />
+            <datalist id="chatPresets"></datalist>
+          </label>
+          <label>Embedding 模型（向量检索）
+            <input id="cfgEmbed" list="embedPresets" placeholder="如 text-embedding-3-small" />
+            <datalist id="embedPresets"></datalist>
+          </label>
+          <label>生成温度 (0~2)
+            <input id="cfgTemp" type="number" min="0" max="2" step="0.1" placeholder="0.3" />
+          </label>
+        </div>
+        <p class="hint" id="modelWarn"></p>
+        <div class="row">
+          <button id="btnSaveModel" class="primary">💾 保存配置</button>
+          <button id="btnTestModel" class="ghost">🧪 测试连接</button>
+          <button id="btnResetModel" class="ghost">↺ 恢复默认(.env)</button>
+        </div>
+        <pre id="modelLog" class="log"></pre>
+      </div>
+    </div>
+
+    <!-- 租户与用户 -->
+    <div id="sub-tenants" class="subpanel">
+      <div class="card">
+        <h2>租户管理</h2>
+        <div id="tenantList" class="tenant-list"></div>
+        <div class="row">
+          <input id="newTenantId" placeholder="租户标识(英文)" style="max-width:180px" />
+          <input id="newTenantName" placeholder="租户名称" style="max-width:220px" />
+          <button id="btnAddTenant" class="primary">+ 新增租户</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h2>新增用户</h2>
+        <div class="form-grid">
+          <label>用户名 <input id="newUserName" /></label>
+          <label>密码 <input id="newUserPass" type="text" /></label>
+          <label>所属租户 <input id="newUserTenant" placeholder="如 demo" /></label>
+          <label>角色
+            <select id="newUserRole"><option value="user">user</option><option value="admin">admin</option></select>
+          </label>
+        </div>
+        <button id="btnAddUser" class="primary">创建用户</button>
+      </div>
+    </div>
+
+    <!-- 系统设置 -->
+    <div id="sub-system" class="subpanel">
+      <div class="card">
+        <h2>🛠 系统设置</h2>
+        <p class="hint">控制登录页展示形态与品牌信息；正式部署模式会隐藏演示账号并提示安全清单。</p>
+        <div class="form-grid">
+          <label>部署模式
+            <select id="sysDeployMode">
+              <option value="demo">🎮 演示模式（显示快捷账号）</option>
+              <option value="production">🚀 正式部署模式（仅显示登录表单）</option>
+            </select>
+          </label>
+          <label>品牌名称 <input id="sysBrand" placeholder="如：博彦科技 · 智能投标 / 方案生成系统" /></label>
+        </div>
+        <div class="row">
+          <button id="btnSaveSystem" class="primary">💾 保存系统设置</button>
+        </div>
+        <div class="checklist">
+          <h3>🛡️ 正式部署上线清单</h3>
+          <ul>
+            <li>修改 <code>.env</code> 的 <code>AUTH_SECRET</code> 与默认管理员密码 <code>ADMIN_PASSWORD</code></li>
+            <li>切换部署模式为「正式部署」</li>
+            <li>在「AI 模型」面板填入正式 API Key 并点击「测试连接」</li>
+            <li>在「租户与用户」创建正式管理员账号，停用 demo 默认账号</li>
+            <li>启用 HTTPS 反向代理（Nginx / Caddy）</li>
+            <li>定期备份 <code>data/app.db</code> 与 <code>data/chroma/</code></li>
+            <li>查看 <a href="https://github.com/zm289098404-netizen/AI-/blob/main/docs/roadmap.md" target="_blank">完整路线图与企业级建议</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 审计 -->
+    <div id="sub-audit" class="subpanel">
+      <details class="card audit-card" open>
+        <summary>📜 操作审计日志（默认展开，可折叠）
+          <select id="auditScope" style="width:auto;margin-left:8px">
+            <option value="tenant">本租户</option>
+            <option value="all">全部租户</option>
           </select>
-        </label>
-        <label>AI 服务商 / Provider
-          <select id="cfgProvider"></select>
-        </label>
-        <label>Base URL（OpenAI兼容）
-          <input id="cfgBaseUrl" placeholder="如 https://api.deepseek.com/v1" />
-        </label>
-        <label>Azure Endpoint
-          <input id="cfgAzureEndpoint" placeholder="如 https://xxx.openai.azure.com" />
-        </label>
-        <label>API Key（留空=不修改）
-          <input id="cfgApiKey" type="password" placeholder="粘贴服务商 API Key" autocomplete="off" />
-        </label>
-        <label>API Version（Azure）
-          <input id="cfgApiVersion" placeholder="2024-08-01-preview" />
-        </label>
-        <label>Chat 模型（对话/生成）
-          <input id="cfgChat" list="chatPresets" placeholder="如 gpt-4o" />
-          <datalist id="chatPresets"></datalist>
-        </label>
-        <label>Embedding 模型（向量检索）
-          <input id="cfgEmbed" list="embedPresets" placeholder="如 text-embedding-3-small" />
-          <datalist id="embedPresets"></datalist>
-        </label>
-        <label>生成温度 (0~2)
-          <input id="cfgTemp" type="number" min="0" max="2" step="0.1" placeholder="0.3" />
-        </label>
-      </div>
-      <div class="row">
-        <button id="btnSaveModel" class="primary">保存配置</button>
-        <button id="btnResetModel" class="ghost">恢复默认(.env)</button>
-      </div>
-      <p class="hint" id="modelWarn"></p>
-      <pre id="modelLog" class="log"></pre>
+          <button id="btnRefreshAudit" class="ghost" style="margin-left:6px">刷新</button>
+        </summary>
+        <div id="auditTable" class="audit-table"></div>
+      </details>
     </div>
-    <div class="card" style="margin-top:16px">
-      <h2>租户管理</h2>
-      <div id="tenantList" class="tenant-list"></div>
-      <div class="row">
-        <input id="newTenantId" placeholder="租户标识(英文)" style="max-width:160px" />
-        <input id="newTenantName" placeholder="租户名称" style="max-width:200px" />
-        <button id="btnAddTenant" class="primary">新增租户</button>
-      </div>
-    </div>
-    <div class="card" style="margin-top:16px">
-      <h2>新增用户</h2>
-      <div class="form-grid">
-        <label>用户名 <input id="newUserName" /></label>
-        <label>密码 <input id="newUserPass" type="text" /></label>
-        <label>所属租户 <input id="newUserTenant" placeholder="如 demo" /></label>
-        <label>角色
-          <select id="newUserRole"><option value="user">user</option><option value="admin">admin</option></select>
-        </label>
-      </div>
-      <button id="btnAddUser" class="primary">创建用户</button>
-      <pre id="adminLog" class="log"></pre>
-    </div>
-    <details class="card audit-card" style="margin-top:16px">
-      <summary>操作审计日志（默认折叠，展开查看）
-        <select id="auditScope" style="width:auto;margin-left:8px">
-          <option value="tenant">本租户</option>
-          <option value="all">全部租户</option>
-        </select>
-        <button id="btnRefreshAudit" class="ghost" style="margin-left:6px">刷新</button>
-      </summary>
-      <div id="auditTable" class="audit-table"></div>
-    </details>
+
+    <pre id="adminLog" class="log" style="margin-top:12px"></pre>
   </section>
 </main>
 </div>

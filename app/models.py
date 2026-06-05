@@ -119,11 +119,13 @@ class TemplateInfo(BaseModel):
     name: str
     sections: list[str]
     builtin: bool
+    category: str = "自定义"
 
 
 class CreateTemplateRequest(BaseModel):
     name: str
     sections: list[str]
+    category: Optional[str] = None
 
 
 # ---- 审计 ----
@@ -178,3 +180,31 @@ class UpdateModelConfigRequest(BaseModel):
     mock_mode: Optional[str] = Field(None, description="auto | on | off")
     clear_api_key: bool = False
     reset: bool = False
+
+
+class TestConnectionResponse(BaseModel):
+    ok: bool
+    mode: str
+    message: str
+    latency_ms: int = 0
+    sample: str = ""
+
+
+class SystemSettings(BaseModel):
+    deployment_mode: str
+    brand_name: str
+    default_brand_name: str
+    deployment_modes: list[str]
+
+
+class UpdateSystemSettingsRequest(BaseModel):
+    deployment_mode: Optional[str] = Field(None, description="demo | production")
+    brand_name: Optional[str] = None
+
+
+class PublicSystemInfo(BaseModel):
+    """登录前可读取的公开信息（不含密钥）。"""
+    brand_name: str
+    deployment_mode: str
+    backend: str
+    mock_mode: bool

@@ -22,13 +22,14 @@ dramatically shortening RFP response time and consolidating cross-team knowledge
 - 🔎 **Semantic / hybrid retrieval**: filter by document type (bid/case/product) and department; optional Azure AI Search hybrid retrieval.
 - 💬 **Smart Q&A**: retrieval-augmented answers with source citations.
 - 📝 **Bid generation**: input RFP requirements → retrieve matching cases/products → generate a multi-section bid draft with citations.
-- 📐 **Custom section templates**: 3 built-in templates + per-tenant custom templates (CRUD), selectable at generation time.
-- 📤 **One-click export**: export the generated bid to **Word (.docx)** or **PDF** (CJK font embedded).
-- 🔐 **Login + multi-tenancy**: account system + per-tenant isolated knowledge bases (mutually invisible).
-- 🧾 **Audit log**: records key actions (login / ingest / generate / export / admin) for admin review.
-- 🤖 **Hot-swap AI models**: admins can configure Provider / Base URL / API Key, switch Azure OpenAI, DeepSeek, Qwen, Zhipu GLM, SiliconFlow, Moonshot/Kimi, or any OpenAI-compatible service, and freely toggle **Mock / real model** (auto / force-on / force-off), effective immediately.
+- 📐 **20 industry templates (collapsible by category)**: government, finance, manufacturing, internet/AI, vertical apps, security/ops, professional services… both the template manager and the generation dropdown group templates by industry; keyword filter included.
+- 📤 **One-click export**: Word (.docx) or PDF (CJK font embedded).
+- 🔐 **Login + multi-tenancy + Demo / Production deployment modes**: per-tenant isolated knowledge bases; the login page toggles between *Demo* (one-click sample accounts) and *Production* (security checklist + hidden demo accounts).
+- 🧾 **Audit log** in a collapsible panel with sticky-header scrolling.
+- 🤖 **Hot-swap AI models + connection test**: configure Provider / Base URL / API Key (Azure OpenAI, DeepSeek, Qwen, Zhipu GLM, SiliconFlow, Moonshot/Kimi, or any OpenAI-compatible service), toggle **Mock / real** modes, and run a one-click **Test Connection** against the current provider.
+- 🛠 **Professional admin**: split into *Overview / AI Model / Tenants & Users / System Settings / Audit* sub-tabs, plus global Toast notifications, a deployment checklist, and a customizable brand name.
 - 🐳 **Containerized**: Dockerfile + docker-compose for one-command local startup.
-- 🔌 **Azure OpenAI**: automatically falls back to **Mock mode** without credentials, so the full flow runs for demos.
+- 🔌 **Mock mode**: automatically falls back without credentials so the full flow runs for demos.
 
 ## 🏗️ Tech Stack
 Python 3.11 · FastAPI · Azure OpenAI (Chat + Embedding) · ChromaDB / Azure AI Search ·

@@ -1,34 +1,86 @@
 const $ = (id) => document.getElementById(id);
 let TOKEN = localStorage.getItem("bid_token") || "";
 let USER = JSON.parse(localStorage.getItem("bid_user") || "null");
-let LAST_BID = null; // {title, content}
+let LAST_BID = null;
 let PROVIDER_PRESETS = [];
+let SYSTEM_INFO = null;
+let TEMPLATES_CACHE = [];
 
+// ============== Toast ==============
+function toast(msg, kind) {
+  const t = document.createElement("div");
+  t.className = "toast " + (kind || "");
+  t.textContent = msg;
+  $("toastRoot").appendChild(t);
+  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; }, 2600);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ============== HTTP ==============
 function authHeaders(extra) {
   return Object.assign({ Authorization: "Bearer " + TOKEN }, extra || {});
 }
-
 async function api(path, opts = {}) {
   opts.headers = authHeaders(opts.headers);
   const r = await fetch(path, opts);
-  if (r.status === 401) {
-    doLogout();
-    throw new Error("登录已过期，请重新登录");
-  }
+  if (r.status === 401) { doLogout(); throw new Error("登录已过期，请重新登录"); }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.detail || ("请求失败 " + r.status));
   return data;
 }
-
 async function apiJson(path, body) {
-  return api(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
 
-// ---------- 登录 ----------
+// ============== 登录页 ==============
+async function loadPublicSystemInfo() {
+  try {
+    const info = await fetch("/api/system").then((r) => r.json());
+    SYSTEM_INFO = info;
+    $("loginBrand").textContent = info.brand_name;
+    $("appBrand").textContent = info.brand_name;
+    document.title = info.brand_name;
+    setLoginMode(info.deployment_mode === "production" ? "production" : "demo", false);
+    const tags = [];
+    tags.push(info.deployment_mode === "production" ? "🚀 正式部署" : "🎮 演示模式");
+    tags.push(info.mock_mode ? "Mock" : "Live AI");
+    tags.push(info.backend);
+    $("loginSystemInfo").textContent = tags.join(" · ");
+  } catch (e) { /* keep defaults */ }
+}
+
+function setLoginMode(mode, fromUser) {
+  document.querySelectorAll(".login-tab").forEach((b) =>
+    b.classList.toggle("active", b.dataset.mode === mode)
+  );
+  const isProd = mode === "production";
+  $("loginDemoBox").classList.toggle("hidden", isProd);
+  $("loginProdBox").classList.toggle("hidden", !isProd);
+  if (fromUser) {
+    // 用户切换 Tab 时如果当前 SYSTEM_INFO 与之不符，给出温和提示，不强制改后端
+    if (SYSTEM_INFO && SYSTEM_INFO.deployment_mode !== mode) {
+      $("loginError").textContent =
+        mode === "production"
+          ? "提示：当前系统仍处于演示模式，登录后管理员可在『管理→系统设置』正式切换。"
+          : "提示：当前系统处于正式部署模式，演示账号默认不可用。";
+    } else {
+      $("loginError").textContent = "";
+    }
+  }
+}
+
+document.querySelectorAll(".login-tab").forEach((tab) => {
+  tab.onclick = () => setLoginMode(tab.dataset.mode, true);
+});
+
+document.querySelectorAll(".demo-chip").forEach((chip) => {
+  chip.onclick = () => {
+    $("loginUser").value = chip.dataset.u;
+    $("loginPass").value = chip.dataset.p;
+    $("loginPass").focus();
+  };
+});
+
 $("btnLogin").onclick = login;
 $("loginPass").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
 
@@ -36,19 +88,19 @@ async function login() {
   $("loginError").textContent = "";
   try {
     const r = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: $("loginUser").value.trim(), password: $("loginPass").value }),
     });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || "登录失败");
-    TOKEN = data.token;
-    USER = data;
+    TOKEN = data.token; USER = data;
     localStorage.setItem("bid_token", TOKEN);
     localStorage.setItem("bid_user", JSON.stringify(USER));
     enterApp();
+    toast("登录成功：" + USER.display_name, "success");
   } catch (e) {
     $("loginError").textContent = e.message;
+    toast(e.message, "error");
   }
 }
 
@@ -73,19 +125,36 @@ function enterApp() {
   loadTemplates();
 }
 
-// ---------- Tabs ----------
+// ============== Tabs ==============
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.onclick = () => {
     document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
     document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
     tab.classList.add("active");
     $(tab.dataset.tab).classList.add("active");
-    if (tab.dataset.tab === "admin") { loadTenants(); loadAudit(); loadModelConfig(); }
+    if (tab.dataset.tab === "admin") loadAdminTab("overview");
     if (tab.dataset.tab === "tpl") loadTemplates();
   };
 });
 
-// ---------- Markdown ----------
+// 管理端子标签
+document.querySelectorAll(".subtab").forEach((b) => {
+  b.onclick = () => loadAdminTab(b.dataset.sub);
+});
+
+function loadAdminTab(name) {
+  document.querySelectorAll(".subtab").forEach((b) =>
+    b.classList.toggle("active", b.dataset.sub === name));
+  document.querySelectorAll(".subpanel").forEach((p) =>
+    p.classList.toggle("active", p.id === "sub-" + name));
+  if (name === "overview") loadOverview();
+  if (name === "ai") loadModelConfig();
+  if (name === "tenants") loadTenants();
+  if (name === "system") loadSystemSettings();
+  if (name === "audit") loadAudit();
+}
+
+// ============== Markdown ==============
 function renderMarkdown(md) {
   return md
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -111,42 +180,51 @@ function renderCitations(container, hits) {
       </div>`).join("");
 }
 
-// ---------- 状态/统计 ----------
+// ============== 状态/统计 ==============
 async function loadStatus() {
   const h = await api("/api/health");
   const llm = h.mock_mode
     ? '<span class="badge mock">⚠ LLM:Mock</span>'
-    : '<span class="badge live">● Azure OpenAI</span>';
+    : '<span class="badge live">● 真实模型</span>';
   const be = h.azure_search
-    ? '<span class="badge live">🔎 Azure AI Search(混合)</span>'
+    ? '<span class="badge live">🔎 Azure AI Search</span>'
     : '<span class="badge gray">🔎 ChromaDB</span>';
-  $("statusbar").innerHTML = llm + " " + be;
+  const dep = h.deployment_mode === "production"
+    ? '<span class="badge prod">🚀 正式部署</span>'
+    : '<span class="badge demo">🎮 演示</span>';
+  $("statusbar").innerHTML = dep + llm + be;
   await loadStats();
 }
 
 async function loadStats() {
-  const s = await api("/api/stats");
-  const dt = Object.entries(s.by_doc_type).map(([k, v]) => `${k}:${v}`).join("　") || "—";
-  const dp = Object.entries(s.by_department).map(([k, v]) => `${k}:${v}`).join("　") || "—";
-  $("kbStats").innerHTML = `
-    <div class="stat-box"><div class="num">${s.total_chunks}</div><div class="lbl">知识片段总数</div></div>
-    <div class="stat-box"><div class="lbl">按类型</div><div>${dt}</div></div>
-    <div class="stat-box"><div class="lbl">按部门</div><div>${dp}</div></div>
-    <div class="stat-box"><div class="lbl">检索后端</div><div>${s.backend}</div></div>`;
+  try {
+    const s = await api("/api/stats");
+    const dt = Object.entries(s.by_doc_type).map(([k, v]) => `${k}:${v}`).join("　") || "—";
+    const dp = Object.entries(s.by_department).map(([k, v]) => `${k}:${v}`).join("　") || "—";
+    $("kbStats").innerHTML = `
+      <div class="stat-box"><div class="num">${s.total_chunks}</div><div class="lbl">知识片段总数</div></div>
+      <div class="stat-box"><div class="lbl">按类型</div><div>${dt}</div></div>
+      <div class="stat-box"><div class="lbl">按部门</div><div>${dp}</div></div>
+      <div class="stat-box"><div class="lbl">检索后端</div><div>${s.backend}</div></div>`;
+  } catch (e) { /* ignore */ }
 }
 
-// ---------- 知识库 ----------
+// ============== 知识库 ==============
 $("btnIngest").onclick = async () => {
   $("btnIngest").disabled = true;
   $("ingestLog").textContent = "正在解析文档并构建向量索引...";
   try {
     const r = await apiJson("/api/ingest", {});
     let log = `✅ 完成：处理文件 ${r.files_processed} 个，索引片段 ${r.chunks_indexed} 条（后端：${r.backend}）\n`;
-    log += r.mock_mode ? "（LLM Mock 模式）\n\n" : "（Azure Embedding）\n\n";
+    log += r.mock_mode ? "（LLM Mock 模式）\n\n" : "（真实 Embedding）\n\n";
     r.details.forEach((d) => { log += `• ${d.file} [${d.doc_type}] → ${d.chunks} 片段\n`; });
     $("ingestLog").textContent = log;
+    toast(`索引完成：${r.chunks_indexed} 片段`, "success");
     await loadStats();
-  } catch (e) { $("ingestLog").textContent = "❌ 失败：" + e.message; }
+  } catch (e) {
+    $("ingestLog").textContent = "❌ 失败：" + e.message;
+    toast("索引失败：" + e.message, "error");
+  }
   $("btnIngest").disabled = false;
 };
 
@@ -159,13 +237,17 @@ $("fileInput").onchange = async (e) => {
   try {
     const r = await api("/api/upload", { method: "POST", body: fd });
     $("ingestLog").textContent = `✅ ${r.saved}\n${r.hint || ""}`;
-  } catch (e) { $("ingestLog").textContent = "❌ " + e.message; }
+    toast(`已上传 ${r.saved}`, "success");
+  } catch (e) {
+    $("ingestLog").textContent = "❌ " + e.message;
+    toast(e.message, "error");
+  }
 };
 
-// ---------- 问答 ----------
+// ============== 问答 ==============
 $("btnAsk").onclick = async () => {
   const q = $("askInput").value.trim();
-  if (!q) return;
+  if (!q) { toast("请输入问题", "warn"); return; }
   $("askAnswer").innerHTML = '<span class="loading">思考中...</span>';
   $("askCitations").innerHTML = "";
   try {
@@ -174,14 +256,17 @@ $("btnAsk").onclick = async () => {
     });
     $("askAnswer").innerHTML = renderMarkdown(r.answer);
     renderCitations($("askCitations"), r.citations);
-  } catch (e) { $("askAnswer").textContent = "❌ " + e.message; }
+  } catch (e) {
+    $("askAnswer").textContent = "❌ " + e.message;
+    toast(e.message, "error");
+  }
 };
 
-// ---------- 标书生成 ----------
+// ============== 标书生成 ==============
 $("btnGen").onclick = async () => {
   const customer = $("genCustomer").value.trim();
   const req = $("genReq").value.trim();
-  if (!customer || !req) { alert("请填写客户名称和 RFP 需求"); return; }
+  if (!customer || !req) { toast("请填写客户名称和 RFP 需求", "warn"); return; }
   $("btnGen").disabled = true;
   $("genResult").innerHTML = '<span class="loading">正在检索知识库并生成标书初稿...</span>';
   $("genCitations").innerHTML = "";
@@ -197,7 +282,11 @@ $("btnGen").onclick = async () => {
     renderCitations($("genCitations"), r.citations);
     $("btnExportDocx").classList.remove("hidden");
     $("btnExportPdf").classList.remove("hidden");
-  } catch (e) { $("genResult").textContent = "❌ 生成失败：" + e.message; }
+    toast("标书生成完成", "success");
+  } catch (e) {
+    $("genResult").textContent = "❌ 生成失败：" + e.message;
+    toast(e.message, "error");
+  }
   $("btnGen").disabled = false;
 };
 
@@ -208,7 +297,7 @@ async function exportBid(fmt) {
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(LAST_BID),
   });
-  if (!r.ok) { alert("导出失败"); return; }
+  if (!r.ok) { toast("导出失败", "error"); return; }
   const blob = await r.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -220,7 +309,34 @@ async function exportBid(fmt) {
 $("btnExportDocx").onclick = () => exportBid("docx");
 $("btnExportPdf").onclick = () => exportBid("pdf");
 
-// ---------- 管理 ----------
+// ============== 概览 ==============
+async function loadOverview() {
+  try {
+    const [h, s, c] = await Promise.all([
+      api("/api/health"), api("/api/stats"), api("/api/admin/model-config"),
+    ]);
+    const provider = c.provider_presets.find((p) => p.id === c.provider);
+    const items = [
+      { label: "部署模式", value: h.deployment_mode === "production" ? "🚀 正式部署" : "🎮 演示模式" },
+      { label: "AI 运行模式", value: h.mock_mode ? "⚠️ Mock" : "✅ 真实模型" },
+      { label: "当前 Provider", value: (provider && provider.name) || c.provider },
+      { label: "Chat 模型", value: c.chat_deployment },
+      { label: "Embedding 模型", value: c.embedding_deployment },
+      { label: "检索后端", value: h.backend },
+      { label: "知识片段总数", value: s.total_chunks },
+      { label: "API Key", value: c.api_key_set ? "已配置" : "未配置" },
+    ];
+    $("overviewGrid").innerHTML = items.map((it) =>
+      `<div class="ov-box"><div class="ov-label">${it.label}</div><div class="ov-value">${it.value}</div></div>`).join("");
+    if (h.mock_mode) {
+      $("overviewTip").textContent = "⚠️ 当前为 Mock 模式（生成内容为占位）。如需真实 AI 体验，请到「AI 模型」配置 API Key 并测试连接。";
+    } else {
+      $("overviewTip").textContent = "✅ 系统已接入真实大模型。建议定期到「审计日志」查看操作记录。";
+    }
+  } catch (e) { $("overviewGrid").innerHTML = "<p class='err'>" + e.message + "</p>"; }
+}
+
+// ============== 租户/用户 ==============
 async function loadTenants() {
   try {
     const list = await api("/api/admin/tenants");
@@ -234,7 +350,8 @@ $("btnAddTenant").onclick = async () => {
     await apiJson("/api/admin/tenants", { id: $("newTenantId").value.trim(), name: $("newTenantName").value.trim() });
     $("newTenantId").value = ""; $("newTenantName").value = "";
     loadTenants();
-  } catch (e) { alert(e.message); }
+    toast("租户已创建", "success");
+  } catch (e) { toast(e.message, "error"); }
 };
 
 $("btnAddUser").onclick = async () => {
@@ -245,16 +362,44 @@ $("btnAddUser").onclick = async () => {
       tenant_id: $("newUserTenant").value.trim(), role: $("newUserRole").value,
     });
     $("adminLog").textContent = `✅ 已创建用户 ${r.username}（租户 ${r.tenant_id} / ${r.role}）`;
-  } catch (e) { $("adminLog").textContent = "❌ " + e.message; }
+    toast(`用户 ${r.username} 已创建`, "success");
+  } catch (e) {
+    $("adminLog").textContent = "❌ " + e.message;
+    toast(e.message, "error");
+  }
 };
 
-// ---------- AI 模型配置 ----------
+// ============== 系统设置 ==============
+async function loadSystemSettings() {
+  try {
+    const s = await api("/api/admin/system");
+    $("sysDeployMode").value = s.deployment_mode;
+    $("sysBrand").value = s.brand_name;
+  } catch (e) { toast(e.message, "error"); }
+}
+
+$("btnSaveSystem").onclick = async () => {
+  try {
+    const r = await api("/api/admin/system", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deployment_mode: $("sysDeployMode").value,
+        brand_name: $("sysBrand").value.trim() || null,
+      }),
+    });
+    $("appBrand").textContent = r.brand_name;
+    document.title = r.brand_name;
+    toast("系统设置已保存", "success");
+    loadStatus();
+  } catch (e) { toast(e.message, "error"); }
+};
+
+// ============== AI 模型配置 ==============
 async function loadModelConfig() {
   try {
     const c = await api("/api/admin/model-config");
-    $("modelMode").textContent = c.mock_mode
-      ? "Mock（占位生成，不调用真实模型）"
-      : "Azure OpenAI（真实调用）";
+    $("modelMode").textContent = c.mock_mode ? "Mock 模式" : "真实模型";
     $("modelMode").className = "mode-tag " + (c.mock_mode ? "mock" : "live");
     PROVIDER_PRESETS = c.provider_presets || [];
     $("cfgProvider").innerHTML = PROVIDER_PRESETS.map((p) =>
@@ -295,7 +440,7 @@ function checkMockWarn(c) {
     $("modelWarn").textContent =
       "⚠️ 当前 Provider 未配置有效 API Key / Endpoint / Base URL，强制『真实』无法生效，系统仍将使用 Mock。请在本面板填写 API Key 与服务地址。";
   } else if (sel === "on") {
-    $("modelWarn").textContent = "ℹ️ 已强制 Mock 模式：生成为占位内容，不消耗 Azure 调用，适合离线演示。";
+    $("modelWarn").textContent = "ℹ️ 已强制 Mock 模式：生成为占位内容，不消耗调用，适合离线演示。";
   } else {
     $("modelWarn").textContent = "";
   }
@@ -305,12 +450,10 @@ $("cfgMock").addEventListener("change", () => checkMockWarn());
 function checkProviderVisibility(providerId) {
   const p = PROVIDER_PRESETS.find((x) => x.id === providerId);
   const isAzure = p && p.mode === "azure";
-  $("cfgBaseUrl").parentElement.style.display = isAzure ? "none" : "block";
-  $("cfgAzureEndpoint").parentElement.style.display = isAzure ? "block" : "none";
-  $("cfgApiVersion").parentElement.style.display = isAzure ? "block" : "none";
-  if (p && p.note) {
-    $("modelWarn").textContent = p.note;
-  }
+  $("lblBaseUrl").style.display = isAzure ? "none" : "block";
+  $("lblAzureEndpoint").style.display = isAzure ? "block" : "none";
+  $("lblApiVersion").style.display = isAzure ? "block" : "none";
+  if (p && p.note) $("modelWarn").textContent = p.note;
 }
 
 $("cfgProvider").addEventListener("change", () => {
@@ -323,15 +466,11 @@ $("cfgProvider").addEventListener("change", () => {
   checkMockWarn();
 });
 
-function checkEmbedWarn() {
-  // 切换 embedding 模型会改变向量维度，需重建索引
+$("cfgEmbed").addEventListener("input", () => {
   const prev = $("modelWarn").textContent;
-  const msg = "⚠️ 更换 Embedding 模型会改变向量维度，保存后请到『知识库』重建索引，否则检索将不准确。";
-  if (!prev.includes("向量维度")) {
-    $("modelWarn").textContent = (prev ? prev + " " : "") + msg;
-  }
-}
-$("cfgEmbed").addEventListener("input", checkEmbedWarn);
+  const msg = "⚠️ 更换 Embedding 模型会改变向量维度，保存后请到『知识库』重建索引。";
+  if (!prev.includes("向量维度")) $("modelWarn").textContent = (prev ? prev + " " : "") + msg;
+});
 
 $("btnSaveModel").onclick = async () => {
   $("modelLog").textContent = "保存中...";
@@ -348,31 +487,41 @@ $("btnSaveModel").onclick = async () => {
       temperature: $("cfgTemp").value === "" ? null : parseFloat($("cfgTemp").value),
     };
     await api("/api/admin/model-config", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
-    $("modelLog").textContent = "✅ 已保存并生效";
+    toast("AI 模型配置已保存", "success");
     await loadModelConfig();
     await loadStatus();
-  } catch (e) { $("modelLog").textContent = "❌ " + e.message; }
+  } catch (e) { $("modelLog").textContent = "❌ " + e.message; toast(e.message, "error"); }
+};
+
+$("btnTestModel").onclick = async () => {
+  $("btnTestModel").disabled = true;
+  $("modelLog").textContent = "🧪 正在测试连接...";
+  try {
+    const r = await api("/api/admin/model-config/test", { method: "POST" });
+    const tag = r.ok ? "✅" : "❌";
+    $("modelLog").textContent =
+      `${tag} ${r.message}\n模式：${r.mode}　延迟：${r.latency_ms} ms\n样例输出：${r.sample || "（无）"}`;
+    toast(r.ok ? `连接成功（${r.latency_ms}ms）` : "连接失败", r.ok ? "success" : "error");
+  } catch (e) { $("modelLog").textContent = "❌ " + e.message; toast(e.message, "error"); }
+  $("btnTestModel").disabled = false;
 };
 
 $("btnResetModel").onclick = async () => {
   if (!confirm("确认恢复为 .env 默认模型配置？")) return;
   try {
     await api("/api/admin/model-config", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reset: true }),
     });
     $("modelWarn").textContent = "";
-    $("modelLog").textContent = "✅ 已恢复默认";
+    toast("已恢复默认", "success");
     await loadModelConfig();
-  } catch (e) { $("modelLog").textContent = "❌ " + e.message; }
+  } catch (e) { toast(e.message, "error"); }
 };
 
-// ---------- 审计日志 ----------
+// ============== 审计 ==============
 $("btnRefreshAudit").onclick = (e) => { e.preventDefault(); e.stopPropagation(); loadAudit(); };
 $("auditScope").onclick = (e) => e.stopPropagation();
 $("auditScope").onchange = (e) => { e.stopPropagation(); loadAudit(); };
@@ -385,55 +534,96 @@ async function loadAudit() {
       '<table><thead><tr><th>时间</th><th>用户</th><th>租户</th><th>操作</th><th>详情</th></tr></thead><tbody>' +
       rows.map((r) =>
         `<tr><td>${r.time}</td><td>${r.username}</td><td>${r.tenant_id}</td>` +
-        `<td><span class="act">${r.action}</span></td><td class="detail">${(r.detail || "").slice(0, 80)}</td></tr>`
+        `<td><span class="act">${r.action}</span></td><td class="detail">${(r.detail || "").slice(0, 120)}</td></tr>`
       ).join("") + "</tbody></table>";
   } catch (e) { $("auditTable").textContent = e.message; }
 }
 
-// ---------- 章节模板 ----------
+// ============== 章节模板（按分类折叠） ==============
 async function loadTemplates() {
   try {
     const list = await api("/api/templates");
-    // 填充生成面板下拉
+    TEMPLATES_CACHE = list;
+    // 标书生成下拉（按 category 分组）
     const sel = $("genTemplate");
-    sel.innerHTML = list.map((t) =>
-      `<option value="${t.id}">${t.name}（${t.sections.length}章${t.builtin ? "·内置" : ""}）</option>`
+    const byCat = groupBy(list, (t) => t.category || "其他");
+    sel.innerHTML = Object.keys(byCat).map((cat) =>
+      `<optgroup label="${cat}">` +
+      byCat[cat].map((t) =>
+        `<option value="${t.id}">${t.name}（${t.sections.length}章${t.builtin ? "" : "·自定义"}）</option>`
+      ).join("") + "</optgroup>"
     ).join("");
-    // 填充模板管理列表
-    if ($("tplList")) {
-      $("tplList").innerHTML = list.map((t) => `
-        <div class="tpl-card">
-          <div class="tpl-head">
-            <strong>${t.name}</strong>
-            ${t.builtin ? '<span class="tpl-badge">内置</span>'
-              : `<button class="tpl-del" data-id="${t.id}">删除</button>`}
-          </div>
-          <ol>${t.sections.map((s) => `<li>${s}</li>`).join("")}</ol>
-        </div>`).join("");
-      document.querySelectorAll(".tpl-del").forEach((b) => {
-        b.onclick = async () => {
-          if (!confirm("确认删除该模板？")) return;
-          try { await api("/api/templates/" + encodeURIComponent(b.dataset.id), { method: "DELETE" }); loadTemplates(); }
-          catch (e) { alert(e.message); }
-        };
-      });
-    }
-  } catch (e) { if ($("tplList")) $("tplList").textContent = e.message; }
+    // 模板管理（折叠 group）
+    renderTplGroups("");
+  } catch (e) { if ($("tplGroups")) $("tplGroups").textContent = e.message; }
 }
+
+function groupBy(arr, fn) {
+  const out = {};
+  for (const x of arr) {
+    const k = fn(x);
+    (out[k] = out[k] || []).push(x);
+  }
+  return out;
+}
+
+function renderTplGroups(keyword) {
+  const kw = (keyword || "").trim().toLowerCase();
+  const matched = !kw ? TEMPLATES_CACHE : TEMPLATES_CACHE.filter((t) =>
+    t.name.toLowerCase().includes(kw) ||
+    (t.category || "").toLowerCase().includes(kw) ||
+    t.sections.join(" ").toLowerCase().includes(kw)
+  );
+  const byCat = groupBy(matched, (t) => t.category || "其他");
+  const cats = Object.keys(byCat);
+  if (!cats.length) { $("tplGroups").innerHTML = '<p class="empty">没有匹配的模板</p>'; return; }
+  $("tplGroups").innerHTML = cats.map((cat, i) => `
+    <details class="tpl-group" ${i === 0 || kw ? "open" : ""}>
+      <summary><span>📂 ${cat}</span><span class="grp-count">${byCat[cat].length} 套</span></summary>
+      <div class="tpl-cards">
+        ${byCat[cat].map((t) => `
+          <div class="tpl-card">
+            <div class="tpl-head">
+              <strong>${t.name}</strong>
+              ${t.builtin
+                ? '<span class="tpl-badge">内置</span>'
+                : `<span class="tpl-badge custom">自定义</span> <button class="tpl-del" data-id="${t.id}">删除</button>`}
+            </div>
+            <ol>${t.sections.map((s) => `<li>${s}</li>`).join("")}</ol>
+          </div>`).join("")}
+      </div>
+    </details>`).join("");
+  document.querySelectorAll(".tpl-del").forEach((b) => {
+    b.onclick = async () => {
+      if (!confirm("确认删除该模板？")) return;
+      try {
+        await api("/api/templates/" + encodeURIComponent(b.dataset.id), { method: "DELETE" });
+        toast("模板已删除", "success"); loadTemplates();
+      } catch (e) { toast(e.message, "error"); }
+    };
+  });
+}
+
+$("tplSearch").addEventListener("input", (e) => renderTplGroups(e.target.value));
+$("btnExpandAll").onclick = () =>
+  document.querySelectorAll("#tplGroups .tpl-group").forEach((d) => d.open = true);
+$("btnCollapseAll").onclick = () =>
+  document.querySelectorAll("#tplGroups .tpl-group").forEach((d) => d.open = false);
 
 $("btnAddTpl").onclick = async () => {
   const name = $("newTplName").value.trim();
   const sections = $("newTplSections").value.split("\n").map((s) => s.trim()).filter(Boolean);
-  if (!name || !sections.length) { $("tplLog").textContent = "❌ 请填写名称和至少一个章节"; return; }
+  if (!name || !sections.length) { toast("请填写名称和至少一个章节", "warn"); return; }
   try {
     await apiJson("/api/templates", { name, sections });
-    $("tplLog").textContent = `✅ 已保存模板「${name}」（${sections.length} 章）`;
+    toast(`已保存模板「${name}」`, "success");
     $("newTplName").value = ""; $("newTplSections").value = "";
     loadTemplates();
-  } catch (e) { $("tplLog").textContent = "❌ " + e.message; }
+  } catch (e) { toast(e.message, "error"); }
 };
 
-// ---------- 启动 ----------
+// ============== 启动 ==============
+loadPublicSystemInfo();
 if (TOKEN && USER) {
   enterApp();
 } else {

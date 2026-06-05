@@ -180,3 +180,70 @@ def test_model_config_requires_admin(client):
     assert client.put("/api/admin/model-config", json={"reset": True},
                       headers=auth(pres)).status_code == 403
 
+
+# ---------------- 系统设置 / 部署模式 / 连接测试 ----------------
+def test_public_system_info_anonymous(client):
+    r = client.get("/api/system")
+    assert r.status_code == 200
+    body = r.json()
+    for k in ("brand_name", "deployment_mode", "backend", "mock_mode"):
+        assert k in body
+    assert body["deployment_mode"] in ("demo", "production")
+
+
+def test_health_exposes_deployment_mode(client):
+    h = client.get("/api/health").json()
+    assert "deployment_mode" in h and "brand_name" in h
+
+
+def test_admin_system_get_and_update(client, admin_token):
+    h = auth(admin_token)
+    cur = client.get("/api/admin/system", headers=h).json()
+    assert cur["deployment_mode"] == "demo"
+    # 切换到正式部署 + 改品牌
+    r = client.put("/api/admin/system",
+                   json={"deployment_mode": "production", "brand_name": "测试品牌"},
+                   headers=h)
+    assert r.status_code == 200
+    assert r.json()["deployment_mode"] == "production"
+    assert r.json()["brand_name"] == "测试品牌"
+    # /api/system 公开接口也跟着变
+    assert client.get("/api/system").json()["deployment_mode"] == "production"
+    # 非法值
+    assert client.put("/api/admin/system", json={"deployment_mode": "staging"},
+                      headers=h).status_code == 400
+    # 复位
+    client.put("/api/admin/system",
+               json={"deployment_mode": "demo",
+                     "brand_name": "博彦科技 · 智能投标 / 方案生成系统"},
+               headers=h)
+
+
+def test_admin_system_requires_admin(client):
+    pres = login(client, "presales", "demo123").json()["token"]
+    assert client.get("/api/admin/system", headers=auth(pres)).status_code == 403
+    assert client.put("/api/admin/system", json={"brand_name": "x"},
+                      headers=auth(pres)).status_code == 403
+
+
+def test_model_connection_test_returns_mock_in_test_env(client, admin_token):
+    h = auth(admin_token)
+    r = client.post("/api/admin/model-config/test", headers=h)
+    assert r.status_code == 200
+    body = r.json()
+    # 测试环境无凭据，应是 Mock
+    assert body["ok"] is False
+    assert body["mode"] == "mock"
+    # 审计记录中应包含
+    al = client.get("/api/admin/audit?scope=tenant", headers=h).json()
+    assert any(e["action"] == "test_model_connection" for e in al)
+
+
+def test_model_connection_test_requires_admin(client):
+    pres = login(client, "presales", "demo123").json()["token"]
+    assert client.post("/api/admin/model-config/test",
+                       headers=auth(pres)).status_code == 403
+
+
+
+

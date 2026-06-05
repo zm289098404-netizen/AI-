@@ -146,3 +146,44 @@ def test_clear_api_key_restores_no_credentials():
     assert settings_store.has_credentials() is True
     settings_store.update_model_config(clear_api_key=True)
     assert settings_store.has_credentials() is False
+
+
+# ---------------- 部署模式 / 品牌 / 连接测试 ----------------
+def test_deployment_mode_default_demo():
+    s = settings_store.get_system_settings()
+    assert s["deployment_mode"] == "demo"
+    assert s["brand_name"] == settings_store.DEFAULT_BRAND_NAME
+
+
+def test_set_deployment_mode_production_and_back():
+    settings_store.set_deployment_mode("production")
+    assert settings_store.deployment_mode() == "production"
+    settings_store.set_deployment_mode("demo")
+    assert settings_store.deployment_mode() == "demo"
+
+
+def test_invalid_deployment_mode_rejected():
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as ei:
+        settings_store.set_deployment_mode("staging")
+    assert ei.value.status_code == 400
+
+
+def test_brand_name_update_and_empty_rejected():
+    from fastapi import HTTPException
+
+    settings_store.set_brand_name("ABC 投标系统")
+    assert settings_store.brand_name() == "ABC 投标系统"
+    with pytest.raises(HTTPException):
+        settings_store.set_brand_name("   ")
+    # 恢复默认
+    settings_store.set_brand_name(settings_store.DEFAULT_BRAND_NAME)
+
+
+def test_test_connection_returns_mock_when_mocked():
+    settings_store.update_model_config(mock_mode="on")
+    r = settings_store.test_connection()
+    assert r["ok"] is False
+    assert r["mode"] == "mock"
+    assert "Mock" in r["message"]

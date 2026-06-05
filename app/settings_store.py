@@ -20,8 +20,12 @@ KEY_BASE_URL = "ai_base_url"
 KEY_API_KEY = "ai_api_key"
 KEY_AZURE_ENDPOINT = "azure_endpoint"
 KEY_API_VERSION = "api_version"
+KEY_DEPLOYMENT_MODE = "deployment_mode"  # demo | production
+KEY_BRAND_NAME = "brand_name"
 
 MOCK_MODES = ("auto", "on", "off")
+DEPLOYMENT_MODES = ("demo", "production")
+DEFAULT_BRAND_NAME = "博彦科技 · 智能投标 / 方案生成系统"
 PROVIDERS = (
     "azure_openai",
     "openai_compatible",
@@ -186,6 +190,35 @@ def api_version() -> str:
     return _get_raw(KEY_API_VERSION) or settings.azure_openai_api_version
 
 
+def deployment_mode() -> str:
+    raw = _get_raw(KEY_DEPLOYMENT_MODE)
+    return raw if raw in DEPLOYMENT_MODES else "demo"
+
+
+def brand_name() -> str:
+    return _get_raw(KEY_BRAND_NAME) or DEFAULT_BRAND_NAME
+
+
+def set_deployment_mode(mode: str) -> str:
+    mode = (mode or "").strip().lower()
+    if mode not in DEPLOYMENT_MODES:
+        from fastapi import HTTPException
+
+        raise HTTPException(400, f"deployment_mode 仅支持 {DEPLOYMENT_MODES}")
+    _set_raw(KEY_DEPLOYMENT_MODE, mode)
+    return mode
+
+
+def set_brand_name(name: str) -> str:
+    name = (name or "").strip()
+    if not name:
+        from fastapi import HTTPException
+
+        raise HTTPException(400, "品牌名称不能为空")
+    _set_raw(KEY_BRAND_NAME, name)
+    return name
+
+
 def _mask_secret(value: str) -> str:
     if not value:
         return ""
@@ -345,3 +378,51 @@ def _notify_change() -> None:
         reset_llm()
     except Exception:
         pass
+
+
+def get_system_settings() -> dict:
+    return {
+        "deployment_mode": deployment_mode(),
+        "brand_name": brand_name(),
+        "default_brand_name": DEFAULT_BRAND_NAME,
+        "deployment_modes": list(DEPLOYMENT_MODES),
+    }
+
+
+def test_connection() -> dict:
+    """对当前 Provider 发送一次最小的 chat 请求验证连通性。
+    返回 {ok, mode, message, latency_ms, sample}。"""
+    import time as _time
+
+    if effective_mock():
+        return {
+            "ok": False,
+            "mode": "mock",
+            "message": "当前为 Mock 模式（未配置凭据或被强制 Mock）。请填写 API Key / Endpoint 后再测试。",
+            "latency_ms": 0,
+            "sample": "",
+        }
+    from app.rag.azure_client import get_llm
+
+    t0 = _time.time()
+    try:
+        sample = get_llm().chat(
+            system="You are a connectivity probe. Reply with the single word: pong.",
+            user="ping",
+            context="",
+        )
+        return {
+            "ok": True,
+            "mode": "live",
+            "message": f"连接成功（{provider()} · {chat_deployment()}）",
+            "latency_ms": int((_time.time() - t0) * 1000),
+            "sample": (sample or "")[:200],
+        }
+    except Exception as e:
+        return {
+            "ok": False,
+            "mode": "live",
+            "message": f"调用失败：{type(e).__name__}: {str(e)[:300]}",
+            "latency_ms": int((_time.time() - t0) * 1000),
+            "sample": "",
+        }
