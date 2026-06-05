@@ -61,6 +61,11 @@ button.ghost:hover { background: #eff6ff; }
 .tpl-del { background: #fee2e2; color: #b91c1c; border: none; padding: 3px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
 .tpl-del:hover { background: #fecaca; }
 
+/* AI 模型配置模式标签 */
+.mode-tag { font-size: 12px; padding: 2px 10px; border-radius: 10px; font-weight: 600; }
+.mode-tag.mock { background: #fef3c7; color: #92400e; }
+.mode-tag.live { background: #d1fae5; color: #065f46; }
+
 /* 审计表 */
 .audit-table { overflow-x: auto; }
 .audit-table table { width: 100%; border-collapse: collapse; font-size: 13px; }

@@ -150,6 +150,7 @@ flowchart LR
 | `app/rag/ingest.py` | 文档解析、分块、入库 |
 | `app/rag/generator.py` | 检索、问答、标书生成 |
 | `app/templates_store.py` | 章节模板 CRUD |
+| `app/settings_store.py` | 运行时 AI 模型配置（管理端切换） |
 | `app/audit.py` | 操作审计日志 |
 | `app/export.py` | Markdown → Word / PDF |
 

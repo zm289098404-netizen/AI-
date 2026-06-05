@@ -46,5 +46,10 @@ def init_all() -> None:
                 action TEXT,
                 detail TEXT
             );
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at REAL
+            );
             """
         )

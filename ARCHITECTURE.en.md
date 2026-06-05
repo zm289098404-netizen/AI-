@@ -152,6 +152,7 @@ business code remains unchanged.
 | `app/rag/ingest.py` | Document parsing, chunking, indexing |
 | `app/rag/generator.py` | Retrieval, Q&A, bid generation |
 | `app/templates_store.py` | Section template CRUD |
+| `app/settings_store.py` | Runtime AI model config (admin switching) |
 | `app/audit.py` | Audit logging |
 | `app/export.py` | Markdown → Word / PDF |
 

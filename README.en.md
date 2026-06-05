@@ -26,6 +26,7 @@ dramatically shortening RFP response time and consolidating cross-team knowledge
 - 📤 **One-click export**: export the generated bid to **Word (.docx)** or **PDF** (CJK font embedded).
 - 🔐 **Login + multi-tenancy**: account system + per-tenant isolated knowledge bases (mutually invisible).
 - 🧾 **Audit log**: records key actions (login / ingest / generate / export / admin) for admin review.
+- 🤖 **Hot-swap AI models**: admins can switch Chat / Embedding deployments and temperature from the admin panel, effective immediately.
 - 🐳 **Containerized**: Dockerfile + docker-compose for one-command local startup.
 - 🔌 **Azure OpenAI**: automatically falls back to **Mock mode** without credentials, so the full flow runs for demos.
 
@@ -139,6 +140,8 @@ run.ps1 / run.sh     One-command startup scripts
 | POST | `/api/admin/tenants` | Create a tenant | Admin |
 | POST | `/api/admin/users` | Create a user | Admin |
 | GET  | `/api/admin/audit` | Audit log (`scope=tenant\|all`) | Admin |
+| GET  | `/api/admin/model-config` | View AI model config | Admin |
+| PUT  | `/api/admin/model-config` | Switch Chat/Embedding model & temperature | Admin |
 
 ## 🔎 Switching to Azure AI Search Hybrid Retrieval
 Set `AZURE_SEARCH_ENDPOINT` and `AZURE_SEARCH_API_KEY` in `.env` (and set `EMBEDDING_DIM` to the real

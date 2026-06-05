@@ -54,8 +54,10 @@ class AzureLLM:
     def embed(self, texts: list[str]) -> list[list[float]]:
         if self.mock:
             return [_mock_embedding(t) for t in texts]
+        from app import settings_store
+
         resp = self._client.embeddings.create(
-            model=settings.azure_openai_embedding_deployment,
+            model=settings_store.embedding_deployment(),
             input=texts,
         )
         return [d.embedding for d in resp.data]
@@ -63,14 +65,16 @@ class AzureLLM:
     def chat(self, system: str, user: str, context: str = "") -> str:
         if self.mock:
             return _mock_chat(system, user, context)
+        from app import settings_store
+
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
         resp = self._client.chat.completions.create(
-            model=settings.azure_openai_chat_deployment,
+            model=settings_store.chat_deployment(),
             messages=messages,
-            temperature=0.3,
+            temperature=settings_store.temperature(),
         )
         return resp.choices[0].message.content or ""
 

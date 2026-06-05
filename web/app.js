@@ -79,7 +79,7 @@ document.querySelectorAll(".tab").forEach((tab) => {
     document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
     tab.classList.add("active");
     $(tab.dataset.tab).classList.add("active");
-    if (tab.dataset.tab === "admin") { loadTenants(); loadAudit(); }
+    if (tab.dataset.tab === "admin") { loadTenants(); loadAudit(); loadModelConfig(); }
     if (tab.dataset.tab === "tpl") loadTemplates();
   };
 });
@@ -245,6 +245,69 @@ $("btnAddUser").onclick = async () => {
     });
     $("adminLog").textContent = `✅ 已创建用户 ${r.username}（租户 ${r.tenant_id} / ${r.role}）`;
   } catch (e) { $("adminLog").textContent = "❌ " + e.message; }
+};
+
+// ---------- AI 模型配置 ----------
+async function loadModelConfig() {
+  try {
+    const c = await api("/api/admin/model-config");
+    $("modelMode").textContent = c.mock_mode
+      ? "Mock（未配置 Azure 凭据，切换仅记录不实际调用）"
+      : "Azure OpenAI（已连接，切换即时生效）";
+    $("modelMode").className = "mode-tag " + (c.mock_mode ? "mock" : "live");
+    $("cfgChat").value = c.chat_deployment;
+    $("cfgEmbed").value = c.embedding_deployment;
+    $("cfgTemp").value = c.temperature;
+    $("chatPresets").innerHTML = c.chat_presets.map((p) => `<option value="${p}">`).join("");
+    $("embedPresets").innerHTML = c.embedding_presets.map((p) => `<option value="${p}">`).join("");
+    const ov = [];
+    if (c.chat_overridden) ov.push("Chat");
+    if (c.embedding_overridden) ov.push("Embedding");
+    if (c.temperature_overridden) ov.push("温度");
+    $("modelLog").textContent = ov.length
+      ? `已覆盖默认值：${ov.join("、")}（默认 Chat=${c.chat_default}, Embedding=${c.embedding_default}）`
+      : `当前使用 .env 默认值（Chat=${c.chat_default}, Embedding=${c.embedding_default}）`;
+  } catch (e) { $("modelLog").textContent = "❌ " + e.message; }
+}
+
+function checkEmbedWarn() {
+  // 切换 embedding 模型会改变向量维度，需重建索引
+  $("modelWarn").textContent =
+    "⚠️ 更换 Embedding 模型会改变向量维度，保存后请到『知识库』重建索引，否则检索将不准确。";
+}
+$("cfgEmbed").addEventListener("input", checkEmbedWarn);
+
+$("btnSaveModel").onclick = async () => {
+  $("modelLog").textContent = "保存中...";
+  try {
+    const body = {
+      chat_deployment: $("cfgChat").value.trim() || null,
+      embedding_deployment: $("cfgEmbed").value.trim() || null,
+      temperature: $("cfgTemp").value === "" ? null : parseFloat($("cfgTemp").value),
+    };
+    await api("/api/admin/model-config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    $("modelLog").textContent = "✅ 已保存并生效";
+    await loadModelConfig();
+    await loadStatus();
+  } catch (e) { $("modelLog").textContent = "❌ " + e.message; }
+};
+
+$("btnResetModel").onclick = async () => {
+  if (!confirm("确认恢复为 .env 默认模型配置？")) return;
+  try {
+    await api("/api/admin/model-config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reset: true }),
+    });
+    $("modelWarn").textContent = "";
+    $("modelLog").textContent = "✅ 已恢复默认";
+    await loadModelConfig();
+  } catch (e) { $("modelLog").textContent = "❌ " + e.message; }
 };
 
 // ---------- 审计日志 ----------

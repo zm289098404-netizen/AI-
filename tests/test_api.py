@@ -114,3 +114,37 @@ def test_tenant_isolation_via_api(client):
     titles = [x["title"] for x in r.json()["hits"]]
     # 不应出现 demo 租户的政务/银行类文档
     assert not any("银行" in t or "政务" in t for t in titles)
+
+
+def test_model_config_get_and_update(client, admin_token):
+    h = auth(admin_token)
+    # 读取
+    r = client.get("/api/admin/model-config", headers=h)
+    assert r.status_code == 200
+    cfg = r.json()
+    assert "chat_deployment" in cfg and "chat_presets" in cfg
+
+    # 更新 chat 模型
+    r = client.put("/api/admin/model-config",
+                   json={"chat_deployment": "gpt-4o-mini", "temperature": 0.7}, headers=h)
+    assert r.status_code == 200
+    cfg = r.json()
+    assert cfg["chat_deployment"] == "gpt-4o-mini"
+    assert cfg["chat_overridden"] is True
+    assert cfg["temperature"] == 0.7
+
+    # 审计记录包含 update_model_config
+    al = client.get("/api/admin/audit?scope=tenant", headers=h).json()
+    assert any(e["action"] == "update_model_config" for e in al)
+
+    # 恢复默认
+    r = client.put("/api/admin/model-config", json={"reset": True}, headers=h)
+    assert r.json()["chat_overridden"] is False
+
+
+def test_model_config_requires_admin(client):
+    pres = login(client, "presales", "demo123").json()["token"]
+    assert client.get("/api/admin/model-config", headers=auth(pres)).status_code == 403
+    assert client.put("/api/admin/model-config", json={"reset": True},
+                      headers=auth(pres)).status_code == 403
+

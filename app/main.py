@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app import auth, export, audit, templates_store
+from app import auth, export, audit, templates_store, settings_store
 from app.models import (
     LoginRequest, LoginResponse, MeResponse, TenantInfo,
     CreateTenantRequest, CreateUserRequest,
@@ -16,6 +16,7 @@ from app.models import (
     AskRequest, AskResponse, GenerateRequest, GenerateResponse,
     StatsResponse, ExportRequest,
     TemplateInfo, CreateTemplateRequest, AuditEntry,
+    ModelConfig, UpdateModelConfigRequest,
 )
 from app.rag import ingest, generator
 from app.rag.retriever import get_backend
@@ -87,6 +88,26 @@ def create_user(req: CreateUserRequest, admin: dict = Depends(auth.require_admin
 def get_audit(scope: str = "tenant", admin: dict = Depends(auth.require_admin)):
     tenant = None if scope == "all" else admin["tenant_id"]
     return [AuditEntry(**e) for e in audit.recent(tenant_id=tenant, limit=200)]
+
+
+# ---------------- AI 模型配置（管理端） ----------------
+@app.get("/api/admin/model-config", response_model=ModelConfig)
+def get_model_config(_: dict = Depends(auth.require_admin)):
+    return ModelConfig(**settings_store.get_model_config())
+
+
+@app.put("/api/admin/model-config", response_model=ModelConfig)
+def update_model_config(req: UpdateModelConfigRequest, admin: dict = Depends(auth.require_admin)):
+    cfg = settings_store.update_model_config(
+        chat_deployment=req.chat_deployment,
+        embedding_deployment=req.embedding_deployment,
+        temperature=req.temperature,
+        reset=req.reset,
+    )
+    audit.log(admin["sub"], admin["tenant_id"], "update_model_config",
+              {"chat": cfg["chat_deployment"], "embedding": cfg["embedding_deployment"],
+               "temperature": cfg["temperature"], "reset": req.reset})
+    return ModelConfig(**cfg)
 
 
 # ---------------- 章节模板 ----------------

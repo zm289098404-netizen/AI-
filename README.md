@@ -25,6 +25,7 @@
 - 📤 **一键导出**：将生成的标书导出为 **Word(.docx)** 或 **PDF**（中文字体内嵌）。
 - 🔐 **用户登录 + 多租户**：账号体系 + 按租户隔离的知识库（数据互不可见）。
 - 🧾 **操作审计日志**：记录登录/入库/生成/导出/管理等关键动作，管理员可查。
+- 🤖 **AI 模型热切换**：管理员可在管理端切换 Chat / Embedding 模型部署与生成温度，即时生效。
 - 🐳 **容器化**：提供 Dockerfile + docker-compose，一键本地起服务。
 - 🔌 **Azure OpenAI**：未配置凭据时自动降级 **Mock 模式**，无需凭据即可演示全流程。
 
@@ -139,6 +140,8 @@ run.ps1 / run.sh     一键启动脚本
 | POST | `/api/admin/tenants` | 新增租户 | Admin |
 | POST | `/api/admin/users` | 新增用户 | Admin |
 | GET  | `/api/admin/audit` | 审计日志（`scope=tenant\|all`） | Admin |
+| GET  | `/api/admin/model-config` | 查看 AI 模型配置 | Admin |
+| PUT  | `/api/admin/model-config` | 切换 Chat/Embedding 模型与温度 | Admin |
 
 ## 🔎 切换到 Azure AI Search 混合检索
 在 `.env` 配置 `AZURE_SEARCH_ENDPOINT` 与 `AZURE_SEARCH_API_KEY`（并将 `EMBEDDING_DIM`

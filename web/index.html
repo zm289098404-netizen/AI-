@@ -133,6 +133,30 @@
   <!-- 管理 -->
   <section id="admin" class="panel">
     <div class="card">
+      <h2>🤖 AI 模型配置</h2>
+      <p class="hint">切换生成所用的 Chat 模型与向量(Embedding)模型部署名，保存后立即生效。
+        当前模式：<span id="modelMode" class="mode-tag"></span></p>
+      <div class="form-grid">
+        <label>Chat 模型（对话/生成）
+          <input id="cfgChat" list="chatPresets" placeholder="如 gpt-4o" />
+          <datalist id="chatPresets"></datalist>
+        </label>
+        <label>Embedding 模型（向量检索）
+          <input id="cfgEmbed" list="embedPresets" placeholder="如 text-embedding-3-small" />
+          <datalist id="embedPresets"></datalist>
+        </label>
+        <label>生成温度 (0~2)
+          <input id="cfgTemp" type="number" min="0" max="2" step="0.1" placeholder="0.3" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="btnSaveModel" class="primary">保存配置</button>
+        <button id="btnResetModel" class="ghost">恢复默认(.env)</button>
+      </div>
+      <p class="hint" id="modelWarn"></p>
+      <pre id="modelLog" class="log"></pre>
+    </div>
+    <div class="card" style="margin-top:16px">
       <h2>租户管理</h2>
       <div id="tenantList" class="tenant-list"></div>
       <div class="row">

@@ -134,3 +134,26 @@ class AuditEntry(BaseModel):
     tenant_id: str
     action: str
     detail: str
+
+
+# ---- AI 模型配置 ----
+class ModelConfig(BaseModel):
+    chat_deployment: str
+    embedding_deployment: str
+    temperature: float
+    chat_default: str
+    embedding_default: str
+    chat_overridden: bool
+    embedding_overridden: bool
+    temperature_overridden: bool
+    chat_presets: list[str]
+    embedding_presets: list[str]
+    mock_mode: bool
+    backend: str
+
+
+class UpdateModelConfigRequest(BaseModel):
+    chat_deployment: Optional[str] = None
+    embedding_deployment: Optional[str] = None
+    temperature: Optional[float] = None
+    reset: bool = False
