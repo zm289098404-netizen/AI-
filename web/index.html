@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>智能投标 / 方案生成系统</title>
+<link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+<!-- 登录遮罩 -->
+<div id="loginOverlay" class="overlay">
+  <div class="login-card">
+    <h1>🏆 智能投标 / 方案生成系统</h1>
+    <p class="subtitle">RAG 售前知识助手 · 请登录</p>
+    <input id="loginUser" placeholder="用户名" autocomplete="username" />
+    <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password" />
+    <button id="btnLogin" class="primary block">登录</button>
+    <p id="loginError" class="err"></p>
+    <div class="demo-accounts">
+      演示账号：<br/>
+      <code>admin / admin123</code>（demo 租户·管理员）<br/>
+      <code>presales / demo123</code>（demo 租户·售前）<br/>
+      <code>acme / acme123</code>（acme 租户·管理员）
+    </div>
+  </div>
+</div>
+
+<div id="appRoot" class="hidden">
+<header>
+  <div>
+    <h1>🏆 智能投标 / 方案生成系统</h1>
+    <p class="subtitle">基于 RAG 的售前知识助手 · 整合标书 / 案例 / 产品文档</p>
+  </div>
+  <div class="userbox">
+    <div id="statusbar" class="statusbar"></div>
+    <div id="userinfo" class="userinfo"></div>
+    <button id="btnLogout" class="ghost">退出</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="kb">📚 知识库</button>
+  <button class="tab" data-tab="ask">💬 智能问答</button>
+  <button class="tab" data-tab="gen">📝 标书生成</button>
+  <button class="tab" data-tab="tpl">📐 章节模板</button>
+  <button class="tab admin-only hidden" data-tab="admin">⚙️ 管理</button>
+</nav>
+
+<main>
+  <!-- 知识库 -->
+  <section id="kb" class="panel active">
+    <div class="card">
+      <h2>知识库管理 <span id="tenantTag" class="tenant-tag"></span></h2>
+      <div class="row">
+        <button id="btnIngest" class="primary">🔄 重建知识库索引</button>
+        <label class="upload-btn">⬆️ 上传文档
+          <input type="file" id="fileInput" accept=".txt,.md,.pdf,.docx" hidden />
+        </label>
+      </div>
+      <div id="kbStats" class="stats"></div>
+      <pre id="ingestLog" class="log"></pre>
+    </div>
+  </section>
+
+  <!-- 问答 -->
+  <section id="ask" class="panel">
+    <div class="card">
+      <h2>售前智能问答</h2>
+      <textarea id="askInput" rows="3" placeholder="例如：我们在政务云项目上有哪些成功案例？产品支持哪些数据库？"></textarea>
+      <div class="row filters">
+        <select id="askDocType">
+          <option value="">全部类型</option>
+          <option value="标书">标书</option>
+          <option value="案例">案例</option>
+          <option value="产品">产品</option>
+        </select>
+        <select id="askDept">
+          <option value="">全部部门</option>
+          <option value="市场部">市场部</option>
+          <option value="售前部">售前部</option>
+          <option value="技术部">技术部</option>
+        </select>
+        <button id="btnAsk" class="primary">提问</button>
+      </div>
+      <div id="askAnswer" class="answer"></div>
+      <div id="askCitations" class="citations"></div>
+    </div>
+  </section>
+
+  <!-- 标书生成 -->
+  <section id="gen" class="panel">
+    <div class="card">
+      <h2>标书 / 方案生成</h2>
+      <div class="form-grid">
+        <label>客户名称 <input id="genCustomer" placeholder="如：某省政务大数据局" /></label>
+        <label>所属行业 <input id="genIndustry" placeholder="如：政务 / 金融 / 制造" /></label>
+      </div>
+      <label class="full">RFP 需求 / 招标要点
+        <textarea id="genReq" rows="5" placeholder="粘贴客户需求建议书(RFP)要点，如：需建设统一数据中台，支持实时分析、信创适配、等保三级…"></textarea>
+      </label>
+      <label class="full">章节模板
+        <select id="genTemplate"></select>
+      </label>
+      <div class="row">
+        <button id="btnGen" class="primary">🚀 生成标书初稿</button>
+        <button id="btnExportDocx" class="ghost hidden">⬇️ 导出 Word</button>
+        <button id="btnExportPdf" class="ghost hidden">⬇️ 导出 PDF</button>
+      </div>
+      <div id="genResult" class="answer markdown"></div>
+      <div id="genCitations" class="citations"></div>
+    </div>
+  </section>
+
+  <!-- 章节模板 -->
+  <section id="tpl" class="panel">
+    <div class="card">
+      <h2>章节模板管理</h2>
+      <p class="hint">模板定义标书的章节结构。内置模板不可删除；自定义模板按租户隔离。</p>
+      <div id="tplList" class="tpl-list"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>新建模板</h2>
+      <label class="full">模板名称 <input id="newTplName" placeholder="如：央企信创专项方案" /></label>
+      <label class="full">章节（每行一个）
+        <textarea id="newTplSections" rows="6" placeholder="项目背景与需求理解&#10;总体技术方案&#10;信创适配说明&#10;实施计划与里程碑&#10;成功案例佐证&#10;报价框架"></textarea>
+      </label>
+      <button id="btnAddTpl" class="primary">保存模板</button>
+      <pre id="tplLog" class="log"></pre>
+    </div>
+  </section>
+
+  <!-- 管理 -->
+  <section id="admin" class="panel">
+    <div class="card">
+      <h2>租户管理</h2>
+      <div id="tenantList" class="tenant-list"></div>
+      <div class="row">
+        <input id="newTenantId" placeholder="租户标识(英文)" style="max-width:160px" />
+        <input id="newTenantName" placeholder="租户名称" style="max-width:200px" />
+        <button id="btnAddTenant" class="primary">新增租户</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>新增用户</h2>
+      <div class="form-grid">
+        <label>用户名 <input id="newUserName" /></label>
+        <label>密码 <input id="newUserPass" type="text" /></label>
+        <label>所属租户 <input id="newUserTenant" placeholder="如 demo" /></label>
+        <label>角色
+          <select id="newUserRole"><option value="user">user</option><option value="admin">admin</option></select>
+        </label>
+      </div>
+      <button id="btnAddUser" class="primary">创建用户</button>
+      <pre id="adminLog" class="log"></pre>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2>操作审计日志
+        <select id="auditScope" style="width:auto;margin-left:8px">
+          <option value="tenant">本租户</option>
+          <option value="all">全部租户</option>
+        </select>
+        <button id="btnRefreshAudit" class="ghost" style="margin-left:6px">刷新</button>
+      </h2>
+      <div id="auditTable" class="audit-table"></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Env / secrets
+.env
+
+# Runtime data (do not commit)
+data/chroma/
+data/app.db
+data/app.db-*
+data/knowledge/
+
+# Exports / test artifacts
+test_out.*
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,133 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #f4f6fb; color: #1f2937; line-height: 1.6;
+}
+header {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #fff; padding: 20px 32px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+}
+header h1 { font-size: 22px; }
+.subtitle { opacity: .85; font-size: 14px; margin-top: 4px; }
+.statusbar { margin-top: 4px; font-size: 13px; }
+.userbox { text-align: right; font-size: 13px; }
+.userinfo { margin: 6px 0; }
+.userinfo .role { background: rgba(255,255,255,.25); padding: 1px 8px; border-radius: 10px; font-size: 11px; margin-left: 4px; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+.badge.mock { background: #f59e0b; color: #000; }
+.badge.live { background: #10b981; color: #fff; }
+.badge.gray { background: #6b7280; color: #fff; }
+
+/* 通用工具类 */
+.hidden { display: none !important; }
+button.block { width: 100%; margin-top: 8px; }
+button.ghost {
+  background: #fff; color: #2563eb; border: 1px solid #2563eb;
+  padding: 9px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+button.ghost:hover { background: #eff6ff; }
+
+/* 登录 */
+.overlay {
+  position: fixed; inset: 0; background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.login-card {
+  background: #fff; border-radius: 16px; padding: 32px; width: 360px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+.login-card h1 { font-size: 20px; color: #1e3a8a; }
+.login-card .subtitle { color: #6b7280; margin: 4px 0 20px; }
+.login-card input { margin-bottom: 12px; }
+.login-card .err { color: #dc2626; font-size: 13px; min-height: 18px; }
+.demo-accounts { margin-top: 14px; font-size: 12px; color: #6b7280; line-height: 1.8; }
+.demo-accounts code { background: #f3f4f6; padding: 1px 6px; border-radius: 4px; }
+
+/* 租户标签 / 管理 */
+.tenant-tag { font-size: 12px; color: #2563eb; font-weight: normal; margin-left: 8px; }
+.tenant-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.tenant-chip { background: #eff6ff; border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #1e3a8a; }
+.tenant-chip small { color: #6b7280; }
+
+/* 模板 */
+.hint { color: #6b7280; font-size: 13px; margin-bottom: 12px; }
+.tpl-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.tpl-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #fafafa; }
+.tpl-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.tpl-card ol { margin-left: 18px; font-size: 13px; color: #4b5563; }
+.tpl-card ol li { margin: 2px 0; }
+.tpl-badge { background: #6b7280; color: #fff; font-size: 11px; padding: 1px 8px; border-radius: 10px; }
+.tpl-del { background: #fee2e2; color: #b91c1c; border: none; padding: 3px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.tpl-del:hover { background: #fecaca; }
+
+/* 审计表 */
+.audit-table { overflow-x: auto; }
+.audit-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.audit-table th, .audit-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #eee; }
+.audit-table th { background: #f9fafb; color: #374151; }
+.audit-table .act { background: #eff6ff; color: #2563eb; padding: 1px 8px; border-radius: 8px; font-size: 12px; }
+.audit-table .detail { color: #6b7280; font-family: monospace; font-size: 12px; }
+
+.tabs { display: flex; gap: 4px; padding: 0 32px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+.tab {
+  border: none; background: none; padding: 14px 20px; cursor: pointer;
+  font-size: 15px; color: #6b7280; border-bottom: 3px solid transparent;
+}
+.tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+
+main { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+.panel { display: none; }
+.panel.active { display: block; }
+.card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.card h2 { font-size: 18px; margin-bottom: 16px; }
+
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.filters select { flex: 0 0 auto; }
+
+button.primary {
+  background: #2563eb; color: #fff; border: none; padding: 10px 20px;
+  border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+button.primary:hover { background: #1d4ed8; }
+button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
+.upload-btn {
+  background: #e0e7ff; color: #1e3a8a; padding: 10px 16px; border-radius: 8px;
+  cursor: pointer; font-size: 14px;
+}
+
+textarea, input, select {
+  width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;
+  font-size: 14px; font-family: inherit;
+}
+select { width: auto; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+label { display: block; font-size: 13px; color: #374151; margin-bottom: 12px; }
+label.full { display: block; }
+
+.stats { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+.stat-box { background: #eff6ff; border-radius: 8px; padding: 12px 16px; min-width: 120px; }
+.stat-box .num { font-size: 22px; font-weight: 700; color: #2563eb; }
+.stat-box .lbl { font-size: 12px; color: #6b7280; }
+
+.log { background: #0f172a; color: #94f7c5; padding: 14px; border-radius: 8px;
+  font-size: 12px; max-height: 240px; overflow: auto; white-space: pre-wrap; margin-top: 12px; }
+
+.answer { margin-top: 16px; padding: 16px; background: #f9fafb; border-radius: 8px;
+  border-left: 4px solid #2563eb; white-space: pre-wrap; }
+.answer.markdown { white-space: normal; }
+.answer.markdown h1 { font-size: 20px; margin: 12px 0; }
+.answer.markdown h2 { font-size: 16px; margin: 14px 0 6px; color: #1e3a8a; }
+.answer.markdown blockquote { background: #fef3c7; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+.answer.markdown li { margin-left: 20px; }
+
+.citations { margin-top: 16px; }
+.cite {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 12px; margin-bottom: 8px;
+}
+.cite .meta { font-size: 12px; color: #2563eb; margin-bottom: 4px; }
+.cite .meta .score { color: #059669; float: right; }
+.cite .txt { font-size: 13px; color: #4b5563; }
+.empty { color: #9ca3af; font-style: italic; }
+.loading { color: #2563eb; }

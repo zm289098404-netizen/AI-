@@ -1,0 +1,13 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+chromadb==0.5.23
+openai==1.59.6
+pypdf==5.1.0
+python-docx==1.1.2
+python-multipart==0.0.20
+bcrypt==5.0.0
+reportlab==4.2.5
+azure-search-documents==11.5.2
