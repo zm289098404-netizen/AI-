@@ -175,6 +175,7 @@ python scripts\smoke_test.py   # 覆盖 登录/多租户隔离/检索/问答/生
 - [系统架构 ARCHITECTURE.md](ARCHITECTURE.md)（含 Mermaid 架构/时序/多租户图）
 - [贡献指南 CONTRIBUTING.md](CONTRIBUTING.md)
 - [pre-commit 钩子指南 docs/pre-commit.md](docs/pre-commit.md)
+- [GitHub 仓库设置 docs/github-setup.md](docs/github-setup.md)（About / Topics）
 - 英文文档：[README.en.md](README.en.md) · [ARCHITECTURE.en.md](ARCHITECTURE.en.md) · [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
 
 ## 📄 License

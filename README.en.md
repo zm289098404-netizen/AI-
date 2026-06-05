@@ -172,6 +172,7 @@ python scripts/smoke_test.py
 - [Architecture ARCHITECTURE.en.md](ARCHITECTURE.en.md) (with Mermaid architecture/sequence/multi-tenant diagrams)
 - [Contributing CONTRIBUTING.en.md](CONTRIBUTING.en.md)
 - [pre-commit Hooks Guide docs/pre-commit.en.md](docs/pre-commit.en.md)
+- [GitHub Repo Setup docs/github-setup.en.md](docs/github-setup.en.md) (About / Topics)
 - Chinese docs: [README.md](README.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## 📄 License
