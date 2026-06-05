@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/cover.svg" alt="智能投标 / 方案生成系统 — RAG 售前助手" width="100%" />
+</p>
+
 # 智能投标 / 方案生成系统（RAG 售前助手）
 
 > 基于 RAG 的售前知识助手 · FastAPI + Azure OpenAI + ChromaDB · 开箱即用（含 Mock 模式）

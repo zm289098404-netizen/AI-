@@ -1,0 +1,124 @@
+<svg width="1280" height="440" viewBox="0 0 1280 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="智能投标 / 方案生成系统 - RAG 售前助手">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f2a6b"/>
+      <stop offset="0.55" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.25" r="0.6">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <style>
+      .zh { font-family: "Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif; }
+      .en { font-family: "Segoe UI","Helvetica Neue",Arial,sans-serif; }
+    </style>
+  </defs>
+
+  <!-- background -->
+  <rect width="1280" height="440" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="440" rx="24" fill="url(#glow)"/>
+
+  <!-- subtle dot grid -->
+  <g fill="#ffffff" opacity="0.05">
+    <circle cx="60" cy="60" r="2"/><circle cx="120" cy="60" r="2"/><circle cx="180" cy="60" r="2"/>
+    <circle cx="60" cy="120" r="2"/><circle cx="120" cy="120" r="2"/><circle cx="180" cy="120" r="2"/>
+    <circle cx="60" cy="180" r="2"/><circle cx="120" cy="180" r="2"/><circle cx="180" cy="180" r="2"/>
+  </g>
+
+  <!-- ===== Left: text ===== -->
+  <g transform="translate(72,96)">
+    <!-- badge -->
+    <g>
+      <rect x="0" y="0" width="300" height="34" rx="17" fill="#ffffff" opacity="0.12"/>
+      <circle cx="22" cy="17" r="5" fill="#22d3ee"/>
+      <text x="40" y="23" class="en" font-size="15" fill="#dbeafe" letter-spacing="1.5">RAG · PRE-SALES ASSISTANT</text>
+    </g>
+
+    <!-- title -->
+    <text x="0" y="112" class="zh" font-size="62" font-weight="800" fill="#ffffff">智能投标 / 方案生成系统</text>
+    <rect x="2" y="132" width="150" height="6" rx="3" fill="url(#accent)"/>
+
+    <!-- subtitle -->
+    <text x="0" y="184" class="en" font-size="24" font-weight="600" fill="#bfdbfe">Intelligent Bidding &amp; Proposal Generation</text>
+
+    <!-- tagline -->
+    <text x="0" y="226" class="zh" font-size="19" fill="#93c5fd">检索增强 · 多租户 · 一键生成标书 · Word / PDF 导出</text>
+
+    <!-- feature chips -->
+    <g class="zh" font-size="16" fill="#e0f2fe">
+      <g transform="translate(0,250)">
+        <rect width="118" height="36" rx="18" fill="#ffffff" opacity="0.13"/>
+        <text x="59" y="24" text-anchor="middle">📚 知识库</text>
+      </g>
+      <g transform="translate(132,250)">
+        <rect width="118" height="36" rx="18" fill="#ffffff" opacity="0.13"/>
+        <text x="59" y="24" text-anchor="middle">💬 智能问答</text>
+      </g>
+      <g transform="translate(264,250)">
+        <rect width="134" height="36" rx="18" fill="#ffffff" opacity="0.13"/>
+        <text x="67" y="24" text-anchor="middle">📝 标书生成</text>
+      </g>
+      <g transform="translate(412,250)">
+        <rect width="118" height="36" rx="18" fill="#ffffff" opacity="0.13"/>
+        <text x="59" y="24" text-anchor="middle">🔐 多租户</text>
+      </g>
+    </g>
+
+    <!-- tech line -->
+    <text x="0" y="322" class="en" font-size="14" fill="#7dd3fc" letter-spacing="0.5">FastAPI · Azure OpenAI · ChromaDB / Azure AI Search · Python 3.11</text>
+  </g>
+
+  <!-- ===== Right: RAG flow illustration ===== -->
+  <g transform="translate(880,70)">
+    <!-- glow disc -->
+    <circle cx="170" cy="150" r="150" fill="#3b82f6" opacity="0.18" filter="url(#soft)"/>
+
+    <!-- documents stack -->
+    <g transform="translate(8,70)">
+      <rect x="0" y="20" width="92" height="120" rx="10" fill="#1d4ed8" opacity="0.6"/>
+      <rect x="12" y="8" width="92" height="120" rx="10" fill="#3b82f6" opacity="0.8"/>
+      <rect x="24" y="-4" width="92" height="120" rx="10" fill="#ffffff"/>
+      <rect x="38" y="14" width="64" height="7" rx="3.5" fill="#94a3b8"/>
+      <rect x="38" y="30" width="64" height="7" rx="3.5" fill="#cbd5e1"/>
+      <rect x="38" y="46" width="48" height="7" rx="3.5" fill="#cbd5e1"/>
+      <rect x="38" y="70" width="64" height="7" rx="3.5" fill="#bfdbfe"/>
+      <rect x="38" y="86" width="40" height="7" rx="3.5" fill="#bfdbfe"/>
+      <text x="70" y="-16" class="zh" font-size="13" fill="#bfdbfe" text-anchor="middle">标书 / 案例 / 产品</text>
+    </g>
+
+    <!-- arrow -->
+    <path d="M150 130 L210 130" stroke="url(#accent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M204 122 L214 130 L204 138 Z" fill="#22d3ee"/>
+
+    <!-- AI core -->
+    <g transform="translate(228,70)">
+      <circle cx="60" cy="60" r="58" fill="#0b1f4d"/>
+      <circle cx="60" cy="60" r="58" fill="none" stroke="url(#accent)" stroke-width="3"/>
+      <!-- nodes -->
+      <g fill="#22d3ee">
+        <circle cx="60" cy="24" r="6"/>
+        <circle cx="28" cy="50" r="6"/>
+        <circle cx="92" cy="50" r="6"/>
+        <circle cx="40" cy="90" r="6"/>
+        <circle cx="80" cy="90" r="6"/>
+      </g>
+      <g stroke="#38bdf8" stroke-width="2" opacity="0.85">
+        <line x1="60" y1="24" x2="28" y2="50"/>
+        <line x1="60" y1="24" x2="92" y2="50"/>
+        <line x1="28" y1="50" x2="40" y2="90"/>
+        <line x1="92" y1="50" x2="80" y2="90"/>
+        <line x1="40" y1="90" x2="80" y2="90"/>
+        <line x1="28" y1="50" x2="92" y2="50"/>
+      </g>
+      <text x="60" y="64" class="en" font-size="18" font-weight="700" fill="#ffffff" text-anchor="middle">RAG</text>
+    </g>
+  </g>
+</svg>

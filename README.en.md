@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/cover.svg" alt="Intelligent Bidding / Proposal Generation System — RAG Pre-sales Assistant" width="100%" />
+</p>
+
 # Intelligent Bidding / Proposal Generation System (RAG Pre-sales Assistant)
 
 > A RAG-powered pre-sales knowledge assistant · FastAPI + Azure OpenAI + ChromaDB · Works out of the box (Mock mode included)
