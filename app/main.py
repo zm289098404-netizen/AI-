@@ -102,11 +102,13 @@ def update_model_config(req: UpdateModelConfigRequest, admin: dict = Depends(aut
         chat_deployment=req.chat_deployment,
         embedding_deployment=req.embedding_deployment,
         temperature=req.temperature,
+        mock_mode=req.mock_mode,
         reset=req.reset,
     )
     audit.log(admin["sub"], admin["tenant_id"], "update_model_config",
               {"chat": cfg["chat_deployment"], "embedding": cfg["embedding_deployment"],
-               "temperature": cfg["temperature"], "reset": req.reset})
+               "temperature": cfg["temperature"], "mock_mode_setting": cfg["mock_mode_setting"],
+               "reset": req.reset})
     return ModelConfig(**cfg)
 
 
@@ -136,7 +138,7 @@ def api_ingest(user: dict = Depends(auth.get_current_user)):
     result = ingest.ingest_directory(user["tenant_id"], reset=True)
     audit.log(user["sub"], user["tenant_id"], "ingest",
               {"files": result["files_processed"], "chunks": result["chunks_indexed"]})
-    return IngestResponse(mock_mode=settings.use_mock, **result)
+    return IngestResponse(mock_mode=settings_store.effective_mock(), **result)
 
 
 @app.post("/api/upload")
@@ -189,7 +191,7 @@ def api_stats(user: dict = Depends(auth.get_current_user)):
     s = get_backend().stats(user["tenant_id"])
     return StatsResponse(
         total_chunks=s["total"], by_doc_type=s["by_doc_type"],
-        by_department=s["by_department"], mock_mode=settings.use_mock,
+        by_department=s["by_department"], mock_mode=settings_store.effective_mock(),
         backend=get_backend().name,
     )
 
@@ -233,7 +235,7 @@ def _url(s: str) -> str:
 def health():
     return {
         "status": "ok",
-        "mock_mode": settings.use_mock,
+        "mock_mode": settings_store.effective_mock(),
         "backend": get_backend().name,
         "azure_search": settings.use_azure_search,
     }

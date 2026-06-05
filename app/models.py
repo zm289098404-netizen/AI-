@@ -148,7 +148,9 @@ class ModelConfig(BaseModel):
     temperature_overridden: bool
     chat_presets: list[str]
     embedding_presets: list[str]
+    mock_mode_setting: str
     mock_mode: bool
+    has_credentials: bool
     backend: str
 
 
@@ -156,4 +158,5 @@ class UpdateModelConfigRequest(BaseModel):
     chat_deployment: Optional[str] = None
     embedding_deployment: Optional[str] = None
     temperature: Optional[float] = None
+    mock_mode: Optional[str] = Field(None, description="auto | on | off")
     reset: bool = False

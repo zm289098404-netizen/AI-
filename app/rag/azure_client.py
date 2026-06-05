@@ -40,9 +40,17 @@ def _mock_chat(system: str, user: str, context: str) -> str:
 
 class AzureLLM:
     def __init__(self) -> None:
-        self.mock = settings.use_mock
         self._client = None
-        if not self.mock:
+
+    @property
+    def mock(self) -> bool:
+        from app import settings_store
+
+        return settings_store.effective_mock()
+
+    def _get_client(self):
+        """惰性创建 AzureOpenAI 客户端（仅真实模式需要）。"""
+        if self._client is None:
             from openai import AzureOpenAI
 
             self._client = AzureOpenAI(
@@ -50,13 +58,14 @@ class AzureLLM:
                 api_key=settings.azure_openai_api_key,
                 api_version=settings.azure_openai_api_version,
             )
+        return self._client
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         if self.mock:
             return [_mock_embedding(t) for t in texts]
         from app import settings_store
 
-        resp = self._client.embeddings.create(
+        resp = self._get_client().embeddings.create(
             model=settings_store.embedding_deployment(),
             input=texts,
         )
@@ -71,7 +80,7 @@ class AzureLLM:
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ]
-        resp = self._client.chat.completions.create(
+        resp = self._get_client().chat.completions.create(
             model=settings_store.chat_deployment(),
             messages=messages,
             temperature=settings_store.temperature(),
@@ -87,3 +96,9 @@ def get_llm() -> AzureLLM:
     if _llm is None:
         _llm = AzureLLM()
     return _llm
+
+
+def reset_llm() -> None:
+    """清除缓存的 LLM 客户端，使配置变更（含 Mock 切换）即时生效。"""
+    global _llm
+    _llm = None

@@ -1,5 +1,6 @@
 """检索 + RAG 生成：智能问答与标书/方案生成（按租户）。"""
 from app.config import settings
+from app import settings_store
 from app.rag.retriever import get_backend
 from app.rag.azure_client import get_llm
 
@@ -33,7 +34,7 @@ def ask(tenant_id, question, top_k=None, doc_type=None, department=None) -> dict
     )
     user = f"知识库片段：\n{context}\n\n用户问题：{question}\n\n请给出带来源标注的回答。"
     answer = get_llm().chat(system, user, context=context)
-    return {"answer": answer, "citations": hits, "mock_mode": settings.use_mock}
+    return {"answer": answer, "citations": hits, "mock_mode": settings_store.effective_mock()}
 
 
 DEFAULT_SECTIONS = [
@@ -75,7 +76,8 @@ def generate_bid(
     )
     content = get_llm().chat(system, user, context=context)
 
-    if settings.use_mock:
+    mock = settings_store.effective_mock()
+    if mock:
         content = _mock_bid(customer, industry, requirements, sections, hits)
 
     title = f"{customer}{('（' + industry + '行业）') if industry else ''}投标方案"
@@ -83,7 +85,7 @@ def generate_bid(
         "title": title,
         "content": content,
         "citations": hits,
-        "mock_mode": settings.use_mock,
+        "mock_mode": mock,
     }
 
 

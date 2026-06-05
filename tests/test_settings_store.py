@@ -67,3 +67,39 @@ def test_empty_values_ignored():
     # 传空白不应覆盖已有值
     settings_store.update_model_config(chat_deployment="   ")
     assert settings_store.chat_deployment() == "gpt-4o"
+
+
+# ---------------- Mock 模式切换 ----------------
+def test_mock_setting_default_auto():
+    cfg = settings_store.get_model_config()
+    assert cfg["mock_mode_setting"] == "auto"
+    # 测试环境无凭据 -> 自动为 Mock
+    assert settings_store.effective_mock() is True
+    assert cfg["has_credentials"] is False
+
+
+def test_force_mock_on():
+    settings_store.update_model_config(mock_mode="on")
+    assert settings_store.mock_mode_setting() == "on"
+    assert settings_store.effective_mock() is True
+
+
+def test_force_mock_off_without_credentials_falls_back():
+    # 无凭据时强制 off 仍应回退 Mock（不会真正调用 Azure）
+    settings_store.update_model_config(mock_mode="off")
+    assert settings_store.mock_mode_setting() == "off"
+    assert settings_store.effective_mock() is True
+
+
+def test_invalid_mock_mode_rejected():
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as ei:
+        settings_store.update_model_config(mock_mode="invalid")
+    assert ei.value.status_code == 400
+
+
+def test_reset_clears_mock_setting():
+    settings_store.update_model_config(mock_mode="on")
+    settings_store.update_model_config(reset=True)
+    assert settings_store.mock_mode_setting() == "auto"

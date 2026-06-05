@@ -252,14 +252,16 @@ async function loadModelConfig() {
   try {
     const c = await api("/api/admin/model-config");
     $("modelMode").textContent = c.mock_mode
-      ? "Mock（未配置 Azure 凭据，切换仅记录不实际调用）"
-      : "Azure OpenAI（已连接，切换即时生效）";
+      ? "Mock（占位生成，不调用真实模型）"
+      : "Azure OpenAI（真实调用）";
     $("modelMode").className = "mode-tag " + (c.mock_mode ? "mock" : "live");
+    $("cfgMock").value = c.mock_mode_setting;
     $("cfgChat").value = c.chat_deployment;
     $("cfgEmbed").value = c.embedding_deployment;
     $("cfgTemp").value = c.temperature;
     $("chatPresets").innerHTML = c.chat_presets.map((p) => `<option value="${p}">`).join("");
     $("embedPresets").innerHTML = c.embedding_presets.map((p) => `<option value="${p}">`).join("");
+    checkMockWarn(c);
     const ov = [];
     if (c.chat_overridden) ov.push("Chat");
     if (c.embedding_overridden) ov.push("Embedding");
@@ -270,10 +272,28 @@ async function loadModelConfig() {
   } catch (e) { $("modelLog").textContent = "❌ " + e.message; }
 }
 
+let _hasCreds = false;
+function checkMockWarn(c) {
+  if (c && typeof c.has_credentials === "boolean") _hasCreds = c.has_credentials;
+  const sel = $("cfgMock").value;
+  if (sel === "off" && !_hasCreds) {
+    $("modelWarn").textContent =
+      "⚠️ 未配置 Azure 凭据（.env 中 ENDPOINT/API_KEY 为空），强制『真实』无法生效，系统仍将使用 Mock。请先在 .env 配置凭据。";
+  } else if (sel === "on") {
+    $("modelWarn").textContent = "ℹ️ 已强制 Mock 模式：生成为占位内容，不消耗 Azure 调用，适合离线演示。";
+  } else {
+    $("modelWarn").textContent = "";
+  }
+}
+$("cfgMock").addEventListener("change", () => checkMockWarn());
+
 function checkEmbedWarn() {
   // 切换 embedding 模型会改变向量维度，需重建索引
-  $("modelWarn").textContent =
-    "⚠️ 更换 Embedding 模型会改变向量维度，保存后请到『知识库』重建索引，否则检索将不准确。";
+  const prev = $("modelWarn").textContent;
+  const msg = "⚠️ 更换 Embedding 模型会改变向量维度，保存后请到『知识库』重建索引，否则检索将不准确。";
+  if (!prev.includes("向量维度")) {
+    $("modelWarn").textContent = (prev ? prev + " " : "") + msg;
+  }
 }
 $("cfgEmbed").addEventListener("input", checkEmbedWarn);
 
@@ -281,6 +301,7 @@ $("btnSaveModel").onclick = async () => {
   $("modelLog").textContent = "保存中...";
   try {
     const body = {
+      mock_mode: $("cfgMock").value,
       chat_deployment: $("cfgChat").value.trim() || null,
       embedding_deployment: $("cfgEmbed").value.trim() || null,
       temperature: $("cfgTemp").value === "" ? null : parseFloat($("cfgTemp").value),

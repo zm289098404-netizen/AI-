@@ -137,6 +137,13 @@
       <p class="hint">切换生成所用的 Chat 模型与向量(Embedding)模型部署名，保存后立即生效。
         当前模式：<span id="modelMode" class="mode-tag"></span></p>
       <div class="form-grid">
+        <label>运行模式
+          <select id="cfgMock">
+            <option value="auto">自动（按凭据判定）</option>
+            <option value="off">真实 Azure OpenAI</option>
+            <option value="on">Mock（离线演示）</option>
+          </select>
+        </label>
         <label>Chat 模型（对话/生成）
           <input id="cfgChat" list="chatPresets" placeholder="如 gpt-4o" />
           <datalist id="chatPresets"></datalist>

@@ -26,7 +26,7 @@ dramatically shortening RFP response time and consolidating cross-team knowledge
 - 📤 **One-click export**: export the generated bid to **Word (.docx)** or **PDF** (CJK font embedded).
 - 🔐 **Login + multi-tenancy**: account system + per-tenant isolated knowledge bases (mutually invisible).
 - 🧾 **Audit log**: records key actions (login / ingest / generate / export / admin) for admin review.
-- 🤖 **Hot-swap AI models**: admins can switch Chat / Embedding deployments and temperature from the admin panel, effective immediately.
+- 🤖 **Hot-swap AI models**: admins can switch Chat / Embedding deployments and temperature, and freely toggle **Mock / real Azure mode** (auto / force-on / force-off) from the admin panel, effective immediately.
 - 🐳 **Containerized**: Dockerfile + docker-compose for one-command local startup.
 - 🔌 **Azure OpenAI**: automatically falls back to **Mock mode** without credentials, so the full flow runs for demos.
 

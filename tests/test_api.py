@@ -142,6 +142,29 @@ def test_model_config_get_and_update(client, admin_token):
     assert r.json()["chat_overridden"] is False
 
 
+def test_mock_mode_toggle_via_api(client, admin_token):
+    h = auth(admin_token)
+    # 默认 auto；测试环境无凭据 -> 生效为 Mock
+    cfg = client.get("/api/admin/model-config", headers=h).json()
+    assert cfg["mock_mode_setting"] == "auto"
+    assert cfg["mock_mode"] is True
+    assert cfg["has_credentials"] is False
+
+    # 强制 on
+    r = client.put("/api/admin/model-config", json={"mock_mode": "on"}, headers=h)
+    assert r.status_code == 200
+    assert r.json()["mock_mode_setting"] == "on"
+    # health 端点也应反映
+    assert client.get("/api/health").json()["mock_mode"] is True
+
+    # 非法值 -> 400
+    assert client.put("/api/admin/model-config", json={"mock_mode": "bad"},
+                      headers=h).status_code == 400
+
+    # 恢复
+    client.put("/api/admin/model-config", json={"reset": True}, headers=h)
+
+
 def test_model_config_requires_admin(client):
     pres = login(client, "presales", "demo123").json()["token"]
     assert client.get("/api/admin/model-config", headers=auth(pres)).status_code == 403
