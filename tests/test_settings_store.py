@@ -103,3 +103,46 @@ def test_reset_clears_mock_setting():
     settings_store.update_model_config(mock_mode="on")
     settings_store.update_model_config(reset=True)
     assert settings_store.mock_mode_setting() == "auto"
+
+
+# ---------------- Provider / API Key ----------------
+def test_provider_presets_include_domestic_models():
+    cfg = settings_store.get_model_config()
+    ids = {p["id"] for p in cfg["provider_presets"]}
+    assert {"deepseek", "dashscope_qwen", "zhipu", "siliconflow", "moonshot"}.issubset(ids)
+
+
+def test_switch_provider_sets_defaults():
+    settings_store.update_model_config(provider="deepseek")
+    cfg = settings_store.get_model_config()
+    assert cfg["provider"] == "deepseek"
+    assert cfg["provider_mode"] == "openai_compatible"
+    assert cfg["base_url"] == "https://api.deepseek.com/v1"
+    assert cfg["chat_deployment"] == "deepseek-chat"
+
+
+def test_api_key_is_masked_and_not_returned_plaintext():
+    settings_store.update_model_config(provider="siliconflow", api_key="sk-test-1234567890")
+    cfg = settings_store.get_model_config()
+    assert cfg["api_key_set"] is True
+    assert cfg["api_key_masked"].startswith("sk-t")
+    assert "1234567890" not in cfg["api_key_masked"]
+
+
+def test_force_real_with_openai_compatible_credentials():
+    settings_store.update_model_config(
+        provider="openai_compatible",
+        base_url="https://example.test/v1",
+        api_key="secret-key",
+        chat_deployment="my-chat",
+        mock_mode="off",
+    )
+    assert settings_store.has_credentials() is True
+    assert settings_store.effective_mock() is False
+
+
+def test_clear_api_key_restores_no_credentials():
+    settings_store.update_model_config(provider="deepseek", api_key="secret-key")
+    assert settings_store.has_credentials() is True
+    settings_store.update_model_config(clear_api_key=True)
+    assert settings_store.has_credentials() is False

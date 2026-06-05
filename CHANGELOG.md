@@ -2,6 +2,18 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### ✨ 功能 (Features)
+- 管理端 AI 模型模块升级：支持 Provider / Base URL / API Key / Azure Endpoint 配置。
+- 支持 Azure OpenAI、DeepSeek、通义千问、智谱 GLM、SiliconFlow、Moonshot/Kimi 与自定义 OpenAI 兼容服务。
+- 管理员可手动切换 Mock / 真实模型模式；无有效凭据时自动安全回退 Mock。
+- 审计日志改为默认折叠展示，展开后固定高度滚动，避免无限向下展开。
+- 示例知识库新增公开资料归纳、脱敏重写的竞标模板（金融科技外包、汽车制造数字化、政企智能客服、软件服务商交付能力）。
+
+### ✅ 测试 (Tests)
+- 测试增加至 68 项，覆盖 Provider/API Key 配置、Mock/真实切换、脱敏模板生成与既有 RAG 流程。
+
 ## [1.0.0] - 2026-06-06
 
 首个正式版本。基于 RAG 的智能投标/方案生成系统，覆盖从知识库构建到标书生成、导出的完整售前流程。

@@ -99,15 +99,22 @@ def get_model_config(_: dict = Depends(auth.require_admin)):
 @app.put("/api/admin/model-config", response_model=ModelConfig)
 def update_model_config(req: UpdateModelConfigRequest, admin: dict = Depends(auth.require_admin)):
     cfg = settings_store.update_model_config(
+        provider=req.provider,
+        base_url=req.base_url,
+        api_key=req.api_key,
+        azure_endpoint=req.azure_endpoint,
+        api_version=req.api_version,
         chat_deployment=req.chat_deployment,
         embedding_deployment=req.embedding_deployment,
         temperature=req.temperature,
         mock_mode=req.mock_mode,
+        clear_api_key=req.clear_api_key,
         reset=req.reset,
     )
     audit.log(admin["sub"], admin["tenant_id"], "update_model_config",
-              {"chat": cfg["chat_deployment"], "embedding": cfg["embedding_deployment"],
+              {"provider": cfg["provider"], "chat": cfg["chat_deployment"], "embedding": cfg["embedding_deployment"],
                "temperature": cfg["temperature"], "mock_mode_setting": cfg["mock_mode_setting"],
+               "api_key_set": cfg["api_key_set"],
                "reset": req.reset})
     return ModelConfig(**cfg)
 

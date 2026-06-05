@@ -67,10 +67,26 @@ button.ghost:hover { background: #eff6ff; }
 .mode-tag.live { background: #d1fae5; color: #065f46; }
 
 /* 审计表 */
-.audit-table { overflow-x: auto; }
+.audit-card summary {
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 600;
+  list-style-position: inside;
+}
+.audit-card summary select,
+.audit-card summary button {
+  font-weight: normal;
+}
+.audit-table {
+  overflow: auto;
+  max-height: 320px;
+  margin-top: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
 .audit-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .audit-table th, .audit-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #eee; }
-.audit-table th { background: #f9fafb; color: #374151; }
+.audit-table th { background: #f9fafb; color: #374151; position: sticky; top: 0; }
 .audit-table .act { background: #eff6ff; color: #2563eb; padding: 1px 8px; border-radius: 8px; font-size: 12px; }
 .audit-table .detail { color: #6b7280; font-family: monospace; font-size: 12px; }
 

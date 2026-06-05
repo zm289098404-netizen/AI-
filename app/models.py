@@ -138,11 +138,23 @@ class AuditEntry(BaseModel):
 
 # ---- AI 模型配置 ----
 class ModelConfig(BaseModel):
+    provider: str
+    provider_mode: str
+    provider_presets: list[dict]
+    base_url: str
+    azure_endpoint: str
+    api_version: str
+    api_key_set: bool
+    api_key_masked: str
     chat_deployment: str
     embedding_deployment: str
     temperature: float
     chat_default: str
     embedding_default: str
+    provider_overridden: bool
+    base_url_overridden: bool
+    azure_endpoint_overridden: bool
+    api_key_overridden: bool
     chat_overridden: bool
     embedding_overridden: bool
     temperature_overridden: bool
@@ -155,8 +167,14 @@ class ModelConfig(BaseModel):
 
 
 class UpdateModelConfigRequest(BaseModel):
+    provider: Optional[str] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = Field(None, description="留空表示不修改现有 API Key")
+    azure_endpoint: Optional[str] = None
+    api_version: Optional[str] = None
     chat_deployment: Optional[str] = None
     embedding_deployment: Optional[str] = None
     temperature: Optional[float] = None
     mock_mode: Optional[str] = Field(None, description="auto | on | off")
+    clear_api_key: bool = False
     reset: bool = False

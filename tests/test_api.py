@@ -123,13 +123,22 @@ def test_model_config_get_and_update(client, admin_token):
     assert r.status_code == 200
     cfg = r.json()
     assert "chat_deployment" in cfg and "chat_presets" in cfg
+    assert "provider_presets" in cfg and "api_key_set" in cfg
 
     # 更新 chat 模型
     r = client.put("/api/admin/model-config",
-                   json={"chat_deployment": "gpt-4o-mini", "temperature": 0.7}, headers=h)
+                   json={
+                       "provider": "deepseek",
+                       "api_key": "sk-unit-test-key",
+                       "chat_deployment": "deepseek-chat",
+                       "temperature": 0.7,
+                   }, headers=h)
     assert r.status_code == 200
     cfg = r.json()
-    assert cfg["chat_deployment"] == "gpt-4o-mini"
+    assert cfg["provider"] == "deepseek"
+    assert cfg["api_key_set"] is True
+    assert "unit-test-key" not in cfg["api_key_masked"]
+    assert cfg["chat_deployment"] == "deepseek-chat"
     assert cfg["chat_overridden"] is True
     assert cfg["temperature"] == 0.7
 

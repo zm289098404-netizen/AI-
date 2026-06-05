@@ -2,6 +2,7 @@ const $ = (id) => document.getElementById(id);
 let TOKEN = localStorage.getItem("bid_token") || "";
 let USER = JSON.parse(localStorage.getItem("bid_user") || "null");
 let LAST_BID = null; // {title, content}
+let PROVIDER_PRESETS = [];
 
 function authHeaders(extra) {
   return Object.assign({ Authorization: "Bearer " + TOKEN }, extra || {});
@@ -255,14 +256,28 @@ async function loadModelConfig() {
       ? "Mock（占位生成，不调用真实模型）"
       : "Azure OpenAI（真实调用）";
     $("modelMode").className = "mode-tag " + (c.mock_mode ? "mock" : "live");
+    PROVIDER_PRESETS = c.provider_presets || [];
+    $("cfgProvider").innerHTML = PROVIDER_PRESETS.map((p) =>
+      `<option value="${p.id}">${p.name}</option>`).join("");
+    $("cfgProvider").value = c.provider;
+    $("cfgBaseUrl").value = c.base_url || "";
+    $("cfgAzureEndpoint").value = c.azure_endpoint || "";
+    $("cfgApiVersion").value = c.api_version || "";
+    $("cfgApiKey").value = "";
+    $("cfgApiKey").placeholder = c.api_key_set
+      ? `已配置：${c.api_key_masked}（留空不修改）`
+      : "粘贴服务商 API Key";
     $("cfgMock").value = c.mock_mode_setting;
     $("cfgChat").value = c.chat_deployment;
     $("cfgEmbed").value = c.embedding_deployment;
     $("cfgTemp").value = c.temperature;
     $("chatPresets").innerHTML = c.chat_presets.map((p) => `<option value="${p}">`).join("");
     $("embedPresets").innerHTML = c.embedding_presets.map((p) => `<option value="${p}">`).join("");
+    checkProviderVisibility(c.provider);
     checkMockWarn(c);
     const ov = [];
+    if (c.provider_overridden) ov.push("Provider");
+    if (c.api_key_overridden) ov.push("API Key");
     if (c.chat_overridden) ov.push("Chat");
     if (c.embedding_overridden) ov.push("Embedding");
     if (c.temperature_overridden) ov.push("温度");
@@ -278,7 +293,7 @@ function checkMockWarn(c) {
   const sel = $("cfgMock").value;
   if (sel === "off" && !_hasCreds) {
     $("modelWarn").textContent =
-      "⚠️ 未配置 Azure 凭据（.env 中 ENDPOINT/API_KEY 为空），强制『真实』无法生效，系统仍将使用 Mock。请先在 .env 配置凭据。";
+      "⚠️ 当前 Provider 未配置有效 API Key / Endpoint / Base URL，强制『真实』无法生效，系统仍将使用 Mock。请在本面板填写 API Key 与服务地址。";
   } else if (sel === "on") {
     $("modelWarn").textContent = "ℹ️ 已强制 Mock 模式：生成为占位内容，不消耗 Azure 调用，适合离线演示。";
   } else {
@@ -286,6 +301,27 @@ function checkMockWarn(c) {
   }
 }
 $("cfgMock").addEventListener("change", () => checkMockWarn());
+
+function checkProviderVisibility(providerId) {
+  const p = PROVIDER_PRESETS.find((x) => x.id === providerId);
+  const isAzure = p && p.mode === "azure";
+  $("cfgBaseUrl").parentElement.style.display = isAzure ? "none" : "block";
+  $("cfgAzureEndpoint").parentElement.style.display = isAzure ? "block" : "none";
+  $("cfgApiVersion").parentElement.style.display = isAzure ? "block" : "none";
+  if (p && p.note) {
+    $("modelWarn").textContent = p.note;
+  }
+}
+
+$("cfgProvider").addEventListener("change", () => {
+  const p = PROVIDER_PRESETS.find((x) => x.id === $("cfgProvider").value);
+  if (!p) return;
+  if (p.base_url) $("cfgBaseUrl").value = p.base_url;
+  if (p.chat) $("cfgChat").value = p.chat;
+  if (p.embedding) $("cfgEmbed").value = p.embedding;
+  checkProviderVisibility(p.id);
+  checkMockWarn();
+});
 
 function checkEmbedWarn() {
   // 切换 embedding 模型会改变向量维度，需重建索引
@@ -301,6 +337,11 @@ $("btnSaveModel").onclick = async () => {
   $("modelLog").textContent = "保存中...";
   try {
     const body = {
+      provider: $("cfgProvider").value,
+      base_url: $("cfgBaseUrl").value.trim() || null,
+      azure_endpoint: $("cfgAzureEndpoint").value.trim() || null,
+      api_version: $("cfgApiVersion").value.trim() || null,
+      api_key: $("cfgApiKey").value.trim() || null,
       mock_mode: $("cfgMock").value,
       chat_deployment: $("cfgChat").value.trim() || null,
       embedding_deployment: $("cfgEmbed").value.trim() || null,
@@ -332,8 +373,9 @@ $("btnResetModel").onclick = async () => {
 };
 
 // ---------- 审计日志 ----------
-$("btnRefreshAudit").onclick = loadAudit;
-$("auditScope").onchange = loadAudit;
+$("btnRefreshAudit").onclick = (e) => { e.preventDefault(); e.stopPropagation(); loadAudit(); };
+$("auditScope").onclick = (e) => e.stopPropagation();
+$("auditScope").onchange = (e) => { e.stopPropagation(); loadAudit(); };
 
 async function loadAudit() {
   try {

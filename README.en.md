@@ -26,7 +26,7 @@ dramatically shortening RFP response time and consolidating cross-team knowledge
 - 📤 **One-click export**: export the generated bid to **Word (.docx)** or **PDF** (CJK font embedded).
 - 🔐 **Login + multi-tenancy**: account system + per-tenant isolated knowledge bases (mutually invisible).
 - 🧾 **Audit log**: records key actions (login / ingest / generate / export / admin) for admin review.
-- 🤖 **Hot-swap AI models**: admins can switch Chat / Embedding deployments and temperature, and freely toggle **Mock / real Azure mode** (auto / force-on / force-off) from the admin panel, effective immediately.
+- 🤖 **Hot-swap AI models**: admins can configure Provider / Base URL / API Key, switch Azure OpenAI, DeepSeek, Qwen, Zhipu GLM, SiliconFlow, Moonshot/Kimi, or any OpenAI-compatible service, and freely toggle **Mock / real model** (auto / force-on / force-off), effective immediately.
 - 🐳 **Containerized**: Dockerfile + docker-compose for one-command local startup.
 - 🔌 **Azure OpenAI**: automatically falls back to **Mock mode** without credentials, so the full flow runs for demos.
 
@@ -56,6 +56,9 @@ uvicorn app.main:app --reload --port 8000
 
 Open http://localhost:8000 , log in with a demo account below, then click **Rebuild Knowledge Index**
 on the "Knowledge" tab.
+
+The sample knowledge base includes government, finance, manufacturing, and AI customer-service scenarios,
+plus de-identified bidding templates rewritten from public industry patterns for a realistic AI generation demo.
 
 > 💡 **Faster**: run `./run.ps1` (Windows) or `bash run.sh` (Linux/macOS) to auto-create the venv,
 > install deps, seed data, and start the server.

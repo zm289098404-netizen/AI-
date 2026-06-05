@@ -140,9 +140,24 @@
         <label>运行模式
           <select id="cfgMock">
             <option value="auto">自动（按凭据判定）</option>
-            <option value="off">真实 Azure OpenAI</option>
+            <option value="off">真实模型（按 Provider 调用）</option>
             <option value="on">Mock（离线演示）</option>
           </select>
+        </label>
+        <label>AI 服务商 / Provider
+          <select id="cfgProvider"></select>
+        </label>
+        <label>Base URL（OpenAI兼容）
+          <input id="cfgBaseUrl" placeholder="如 https://api.deepseek.com/v1" />
+        </label>
+        <label>Azure Endpoint
+          <input id="cfgAzureEndpoint" placeholder="如 https://xxx.openai.azure.com" />
+        </label>
+        <label>API Key（留空=不修改）
+          <input id="cfgApiKey" type="password" placeholder="粘贴服务商 API Key" autocomplete="off" />
+        </label>
+        <label>API Version（Azure）
+          <input id="cfgApiVersion" placeholder="2024-08-01-preview" />
         </label>
         <label>Chat 模型（对话/生成）
           <input id="cfgChat" list="chatPresets" placeholder="如 gpt-4o" />
@@ -185,16 +200,16 @@
       <button id="btnAddUser" class="primary">创建用户</button>
       <pre id="adminLog" class="log"></pre>
     </div>
-    <div class="card" style="margin-top:16px">
-      <h2>操作审计日志
+    <details class="card audit-card" style="margin-top:16px">
+      <summary>操作审计日志（默认折叠，展开查看）
         <select id="auditScope" style="width:auto;margin-left:8px">
           <option value="tenant">本租户</option>
           <option value="all">全部租户</option>
         </select>
         <button id="btnRefreshAudit" class="ghost" style="margin-left:6px">刷新</button>
-      </h2>
+      </summary>
       <div id="auditTable" class="audit-table"></div>
-    </div>
+    </details>
   </section>
 </main>
 </div>

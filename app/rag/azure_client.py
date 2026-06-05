@@ -1,4 +1,4 @@
-"""Azure OpenAI 封装，含 Mock 降级，保证无凭据时也能跑通完整流程。"""
+"""AI 客户端封装：Azure OpenAI / OpenAI兼容服务 / Mock 降级。"""
 import hashlib
 import math
 from typing import Optional
@@ -33,8 +33,7 @@ def _mock_chat(system: str, user: str, context: str) -> str:
         "【Mock 模式输出 — 未配置 Azure OpenAI 凭据】\n\n"
         "以下内容基于检索到的知识库片段自动汇总（占位生成，配置真实凭据后将由大模型生成）：\n\n"
         f"{snippet}\n\n"
-        "—— 以上为检索增强占位回答，请在 .env 中配置 AZURE_OPENAI_ENDPOINT 与 "
-        "AZURE_OPENAI_API_KEY 以启用真实生成。"
+        "—— 以上为检索增强占位回答。可在管理端配置 API Key 并切换为真实模型。"
     )
 
 
@@ -49,15 +48,25 @@ class AzureLLM:
         return settings_store.effective_mock()
 
     def _get_client(self):
-        """惰性创建 AzureOpenAI 客户端（仅真实模式需要）。"""
+        """惰性创建 AI 客户端（仅真实模式需要）。"""
         if self._client is None:
-            from openai import AzureOpenAI
+            from app import settings_store
 
-            self._client = AzureOpenAI(
-                azure_endpoint=settings.azure_openai_endpoint,
-                api_key=settings.azure_openai_api_key,
-                api_version=settings.azure_openai_api_version,
-            )
+            if settings_store.provider_mode() == "azure":
+                from openai import AzureOpenAI
+
+                self._client = AzureOpenAI(
+                    azure_endpoint=settings_store.azure_endpoint(),
+                    api_key=settings_store.api_key(),
+                    api_version=settings_store.api_version(),
+                )
+            else:
+                from openai import OpenAI
+
+                self._client = OpenAI(
+                    api_key=settings_store.api_key(),
+                    base_url=settings_store.base_url(),
+                )
         return self._client
 
     def embed(self, texts: list[str]) -> list[list[float]]:
