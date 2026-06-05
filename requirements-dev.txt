@@ -1,0 +1,4 @@
+# 运行测试所需依赖（开发用）
+-r requirements.txt
+pytest==8.3.4
+httpx==0.28.1

@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     # ---- 数据与向量库路径 ----
     data_dir: str = "data/knowledge"
     chroma_dir: str = "data/chroma"
+    app_db_dir: str = "data"
     collection_name: str = "bid_knowledge"
 
     # ---- 分块/检索 ----
@@ -57,7 +58,7 @@ class Settings(BaseSettings):
 
     @property
     def app_db_path(self) -> Path:
-        p = BASE_DIR / "data"
+        p = BASE_DIR / self.app_db_dir
         p.mkdir(parents=True, exist_ok=True)
         return p / "app.db"
 

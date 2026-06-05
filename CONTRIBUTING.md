@@ -4,7 +4,7 @@
 
 ## 开发环境
 - Python 3.11
-- 安装依赖：`pip install -r requirements.txt`
+- 安装依赖：`pip install -r requirements-dev.txt`（含 pytest）
 - 复制配置：`cp .env.example .env`（不配置 Azure 凭据即以 Mock 模式运行）
 
 ## 本地运行
@@ -14,6 +14,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 ## 提交前自检
+- 运行单元测试：`pytest -q`（48 项，使用临时目录隔离，无需启动服务）
 - 启动服务后运行端到端测试：`python scripts/smoke_test.py`
 - 确保不要提交以下内容（已在 .gitignore 中忽略）：
   - `.env`（真实凭据）

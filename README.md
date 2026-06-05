@@ -6,6 +6,8 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+**中文** | [English](README.en.md)
+
 基于 **RAG（检索增强生成）** 的智能售前助手：汇聚公司历年标书、成功案例与产品文档，
 帮助售前/市场/技术团队快速检索知识、智能问答，并一键生成结构化标书初稿，
 显著缩短 RFP 响应周期、整合跨团队知识资产。
@@ -95,6 +97,7 @@ data/
 scripts/
   seed_data.py       多租户示例数据
   smoke_test.py      端到端测试脚本
+tests/               pytest 单元/集成测试（48 项）
 Dockerfile / docker-compose.yml   容器化
 run.ps1 / run.sh     一键启动脚本
 .github/workflows/ci.yml          GitHub Actions CI（自动跑 smoke_test）
@@ -149,9 +152,15 @@ run.ps1 / run.sh     一键启动脚本
 
 ## 🧪 测试
 ```powershell
-# 启动服务后另开终端
-python scripts\smoke_test.py   # 覆盖 登录/多租户隔离/检索/问答/生成/导出/管理
+# 1) 单元测试（无需启动服务，使用临时目录隔离，共 48 项）
+pip install -r requirements-dev.txt
+pytest -q
+
+# 2) 端到端测试（先启动服务，另开终端运行）
+python scripts\smoke_test.py   # 覆盖 登录/多租户隔离/检索/问答/生成/导出/模板/审计
 ```
+单元测试位于 `tests/`，覆盖：分块与元数据解析、Azure Mock 客户端、导出(Word/PDF)、
+认证(令牌/口令)、章节模板、RAG 检索/生成/隔离、以及 API 集成（含 RBAC 与审计）。
 
 ## 💡 业务价值
 - **提效**：标书初稿从数天缩短到分钟级，并可一键导出 Word/PDF 交付。
