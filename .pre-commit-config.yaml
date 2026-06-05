@@ -1,0 +1,25 @@
+# pre-commit 配置 — https://pre-commit.com
+# 安装： pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: detect-private-key
+      - id: check-merge-conflict
+
+  # 本地钩子：提交前运行 pytest 单元测试（Mock 模式，临时目录隔离）
+  - repo: local
+    hooks:
+      - id: pytest-unit
+        name: pytest unit tests
+        entry: python -m pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

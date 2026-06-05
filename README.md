@@ -166,3 +166,12 @@ python scripts\smoke_test.py   # 覆盖 登录/多租户隔离/检索/问答/生
 - **提效**：标书初稿从数天缩短到分钟级，并可一键导出 Word/PDF 交付。
 - **可信**：所有生成内容标注知识库来源，可追溯。
 - **协同 + 隔离**：统一沉淀市场/售前/技术部知识资产，多租户安全隔离。
+
+## 📚 文档
+- [系统架构 ARCHITECTURE.md](ARCHITECTURE.md)（含 Mermaid 架构/时序/多租户图）
+- [贡献指南 CONTRIBUTING.md](CONTRIBUTING.md)
+- [pre-commit 钩子指南 docs/pre-commit.md](docs/pre-commit.md)
+- 英文文档：[README.en.md](README.en.md) · [ARCHITECTURE.en.md](ARCHITECTURE.en.md) · [CONTRIBUTING.en.md](CONTRIBUTING.en.md)
+
+## 📄 License
+[MIT](LICENSE)

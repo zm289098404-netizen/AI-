@@ -164,5 +164,11 @@ python scripts/smoke_test.py
 - **Trust**: all generated content is annotated with knowledge-base sources, fully traceable.
 - **Collaboration + Isolation**: unified knowledge assets across teams, with secure multi-tenant isolation.
 
+## 📚 Documentation
+- [Architecture ARCHITECTURE.en.md](ARCHITECTURE.en.md) (with Mermaid architecture/sequence/multi-tenant diagrams)
+- [Contributing CONTRIBUTING.en.md](CONTRIBUTING.en.md)
+- [pre-commit Hooks Guide docs/pre-commit.en.md](docs/pre-commit.en.md)
+- Chinese docs: [README.md](README.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ## 📄 License
 [MIT](LICENSE)
